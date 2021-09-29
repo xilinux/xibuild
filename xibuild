@@ -1,0 +1,66 @@
+#!/bin/bash
+
+usage () {
+ cat << EOF
+usage: $0 XIBUILD 
+EOF
+}
+
+BUILD_FILE=${@: -1}
+
+[[ $# = 0 ]] && usage && exit 1
+[ -f "$FILE" ] && echo "$BUILD_FILE not found" && exit 1
+
+source $BUILD_FILE
+
+PKG_NAME=$(basename $BUILD_FILE .xibuild)
+
+XI_ROOT=$(pwd)
+PKGS_OUTPUT=$XI_ROOT/xipackages
+
+PKG_BUILD_DIR=$XI_ROOT/tmp/$PKG_NAME
+PKG_DEST=$PKG_BUILD_DIR/package
+
+# make the directories
+mkdir -p $PKG_DEST
+cd $PKG_BUILD_DIR
+
+# fetch, build then package the package
+fetch
+build
+package
+
+
+# go back to root, make things easier
+cd $XI_ROOT
+
+# bundle the package to a targz in the output dir
+mkdir -p $PKGS_OUTPUT
+
+PKG_FILE=$PKGS_OUTPUT/$PKG_NAME.xipkg
+
+tar -C $PKG_BUILD_DIR/package -czf $PKG_FILE ./
+
+# create info file
+PKG_INFO=$PKGS_OUTPUT/$PKG_NAME.xipkg.info
+
+echo "" > $PKG_INFO
+echo "NAME=$PKG_NAME" >> $PKG_INFO
+echo "PKG_FILE=$PKG_NAME.xipkg" >> $PKG_INFO
+echo "CHECKSUM=$(md5sum $PKG_FILE | awk '{ print $1 }')" >> $PKG_INFO
+echo "DATE=$(date)" >> $PKG_INFO
+
+# sign the package
+PRIV_KEY=$XI_ROOT/keychain/xi.pem
+PUB_KEY=$XI_ROOT/keychain/xi.pub
+
+if [ -f "$PRIV_KEY" ]; then
+    echo "SIGNATURE=\n" >> $PKG_INFO
+    openssl dgst -sign $PRIV_KEY $PKG_FILE >> $PKG_INFO
+else
+    echo "SIGNATURE=\nunsigned">> $PKG_INFO
+    >&2 echo "WARNING! no private key: unsigned packages!"
+fi
+# clean up
+rm -rf $PKG_BUILD_DIR
+rmdir $XI_ROOT/tmp

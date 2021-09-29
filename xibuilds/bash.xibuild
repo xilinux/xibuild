@@ -1,0 +1,17 @@
+#!/bin/bash
+
+fetch () {
+    git clone https://git.savannah.gnu.org/git/bash.git
+}
+
+build () {
+    cd bash
+    ./configure --without-bash-malloc --prefix=/usr
+    make
+    make DESTDIR=$PKG_DEST install
+}
+
+package () {
+    echo "packaged"    
+}
+
