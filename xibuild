@@ -49,6 +49,7 @@ echo "NAME=$PKG_NAME" >> $PKG_INFO
 echo "PKG_FILE=$PKG_NAME.xipkg" >> $PKG_INFO
 echo "CHECKSUM=$(md5sum $PKG_FILE | awk '{ print $1 }')" >> $PKG_INFO
 echo "DATE=$(date)" >> $PKG_INFO
+echo "DEPS=(${DEPS[*]})" >> $PKG_INFO
 
 # sign the package
 PRIV_KEY=$XI_ROOT/keychain/xi.pem
