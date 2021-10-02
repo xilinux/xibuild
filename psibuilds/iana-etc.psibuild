@@ -1,0 +1,16 @@
+#!/bin/bash
+
+DEPS=()
+
+SOURCE=https://github.com/Mic92/iana-etc
+
+build () {
+    python update.py out
+}
+
+package () {
+    mkdir -vp $PKG_DEST/etc
+    cp -v out/dist/protocols $PKG_DEST/etc/
+    cp -v out/dist/services $PKG_DEST/etc/
+}
+

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+DEPS=(glibc)
+
+SOURCE=https://git.savannah.gnu.org/git/tar.git
+
+build () {
+    ./bootstrap
+    ./configure --prefix=/usr
+    make
+    make DESTDIR=$PKG_DEST install
+}
+

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+DEPS=(glibc m4 sh)
+
+SOURCE=https://github.com/nlitsme/gnubc
+
+
+build () {
+    ./configure --prefix=/usr --docdir=/usr/share/doc/flex --disable-static
+    make
+    make check
+    make DESTDIR=$PKG_DEST install
+}
+
+package () {
+    ln -sv $PKG_DEST/usr/bin/flex $PKG_DEST/usr/bin/lex
+}
+
+

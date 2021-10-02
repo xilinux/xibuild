@@ -1,0 +1,15 @@
+#!/bin/bash
+
+DEPS=(readline)
+
+SOURCE=https://github.com/gavinhoward/bc
+
+
+build () {
+    CC=gcc ./configure --prefix=/usr -G -O3
+    make
+    make test
+    make DESTDIR=$PKG_DEST install
+}
+
+

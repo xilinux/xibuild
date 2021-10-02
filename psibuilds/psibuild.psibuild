@@ -1,0 +1,10 @@
+#!/bin/bash
+
+DEPS=(bash tar)
+
+SOURCE=https://git.davidovski.xyz/psibuild.git
+
+package () {
+    cp psibuild $PKG_DEST/usr/bin/
+}
+

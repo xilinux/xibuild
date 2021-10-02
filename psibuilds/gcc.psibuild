@@ -1,0 +1,15 @@
+#!/bin/bash
+
+DEPS=(glibc)
+
+SOURCE=git://gcc.gnu.org/git/gcc.git
+
+
+build () {
+    mkdir -v build
+    cd build
+    ../configure --prefix=/usr --disable-multilib --disable-bootstrap
+    make
+    make DESTDIR=$PKG_DEST install
+}
+

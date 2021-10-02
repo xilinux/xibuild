@@ -1,0 +1,25 @@
+#!/bin/bash
+
+DEPS=(gcc-libs sh)
+
+SOURCE=https://github.com/ryepdx/gmp
+
+
+build () {
+    ./configure --prefix=/usr --enable-cxx --disable-static --docdir=/usr/share/doc/gmp
+
+    make
+    make html
+
+    make check 2>&1 | tee gmp-check-log
+    awk '/# PASS:/{total+=$3} ; END{print total}' gmp-check-log
+
+    make DESTDIR=$PKG_DEST install
+    make DESTDIR=$PKG_DEST install-html
+}
+
+package () {
+    ln -sv $PKG_DEST/usr/bin/flex $PKG_DEST/usr/bin/lex
+}
+
+

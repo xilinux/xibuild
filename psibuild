@@ -1,68 +1,144 @@
 #!/bin/bash
 
+PSI_ROOT=$(pwd)
+
+ERROR="\033[0;31m"
+INFO="\033[0;34m"
+PASS="\033[0;32m"
+NEUTRAL="\033[0;33m"
+RESET="\033[0m"
+
+MAKEFLAGS="-j11"
+alias make="make $MAKEFLAGS"
+
 usage () {
  cat << EOF
 usage: $0 PSIBUILD 
 EOF
 }
 
-BUILD_FILE=${@: -1}
+psibuild () {
+    BUILD_FILE=${@: -1}
 
-[[ $# = 0 ]] && usage && epsit 1
-[ -f "$FILE" ] && echo "$BUILD_FILE not found" && epsit 1
+    cd $PSI_ROOT
 
-source $BUILD_FILE
+    [[ $# = 0 ]] && usage && exit 1
+    [ ! -f "$BUILD_FILE" ] && echo "$BUILD_FILE not found" && exit 1
 
-PKG_NAME=$(basename $BUILD_FILE .psibuild)
+    clean () {
+        # clean up
+        rm -rf $PKG_BUILD_DIR
+        rmdir $PSI_ROOT/tmp > /dev/null 2>&1
+    }
 
-PSI_ROOT=$(pwd)
-PKGS_OUTPUT=$PSI_ROOT/psipkgs
+    build () {
+        printf "\tpassing missing build stage..."
+    }
+    package () {
+        echo "Passing missing package stage"
+    }
 
-PKG_BUILD_DIR=$PSI_ROOT/tmp/$PKG_NAME
-PKG_DEST=$PKG_BUILD_DIR/package
+    source $BUILD_FILE
 
-# make the directories
-mkdir -p $PKG_DEST
-cd $PKG_BUILD_DIR
+    PKG_NAME=$(basename $BUILD_FILE .psibuild)
 
-# fetch, build then package the package
-fetch
-build
-package
+    LOGFILE=$PSI_ROOT/logs/$PKG_NAME.log
+    PKGS_OUTPUT=$PSI_ROOT/ppkgs
+    PKG_FILE=$PKGS_OUTPUT/$PKG_NAME.ppkg
+
+    PKG_BUILD_DIR=$PSI_ROOT/tmp/$PKG_NAME
+    PKG_DEST=$PKG_PSI_ROOT/tmp/$PKG_NAME.package
+
+    # make sure build dir is clean before starting
+    rm -rf $PKG_BUILD_DIR
+
+    # make the directories
+    mkdir -p $PKG_BUILD_DIR
+    mkdir -p $PKG_DEST
+    mkdir -p $PKGS_OUTPUT
+    mkdir -p $PSI_ROOT/logs
+
+    date > $LOGFILE
+    echo "Build log for $PKG_NAME from $BUILD_FILE\n" >> $LOGFILE
+    printf "\033[0;36m====> $PKG_NAME.ppkg\n" | tee -a $LOGFILE
+
+    cd $PKG_BUILD_DIR
+
+    # fetch, build then package the package
+    ############
+
+    # try get the commit hash for the package
+    VER_HASH=$(git ls-remote $SOURCE HEAD | awk '{ print $1 }')
+
+    # If we already have this package, don't waste our time
+    if [ -f "$PKG_FILE.info" ] && [ -f "$PKG_FILE" ]; then
+        EXISTING_HASH=$(grep -a "VER_HASH" $PKG_FILE.info | sed "s/VER_HASH=//")
+
+        echo "Comparing $EXISTING_HASH to $VER_HASH" >> $LOGFILE
+
+        printf "$INFO\tvalidating commit hash...";
+        if [ "$EXISTING_HASH" == "$VER_HASH" ]; then
+            printf "$NEUTRAL package exists\n"
+            return 0;
+        else 
+            printf "$NEUTRAL package outdated\n"
+        fi
+    fi
+
+    printf "$INFO\tfetching package...";
+    git clone $SOURCE . >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || printf "$ERROR error! See log\n"
+
+    printf "$INFO\tbuilding package...";
+    build >> $LOGFILE 2>&1 && printf "$PASS built\n" || printf "$ERROR error! See log\n";
+    
+
+    printf "\033[0;34m\tpackaging package...\033[0m";
+    package >> $LOGFILE 2>&1 && printf "$PASS packaged\n" || printf "$ERROR error! See log\n"
+    
+
+    # go back to root, make things easier
+    cd $PSI_ROOT
+
+    printf "$INFO\tarchiving package...";
+    tar -C $PKG_DEST -czf $PKG_FILE ./ >> $LOGFILE 2>&1 && printf "$PASS archived to $(du -sh $PKG_FILE | awk '{ print $1 }')\n" || printf "$ERROR error! See log\n"
 
 
-# go back to root, make things easier
-cd $PSI_ROOT
+    # create info file
+    printf "$INFO\tcreating ppkg.info...";
+    PKG_INFO=$PKGS_OUTPUT/$PKG_NAME.ppkg.info
 
-# bundle the package to a targz in the output dir
-mkdir -p $PKGS_OUTPUT
+    echo "" > $PKG_INFO
+    echo "NAME=$PKG_NAME" >> $PKG_INFO
+    echo "PKG_FILE=$PKG_NAME.ppkg" >> $PKG_INFO
+    echo "CHECKSUM=$(md5sum $PKG_FILE | awk '{ print $1 }')" >> $PKG_INFO
+    echo "VER_HASH=$VER_HASH" >> $PKG_INFO
+    echo "SOURCE=$SOURCE" >> $PKG_INFO
+    echo "DATE=$(date)" >> $PKG_INFO
+    echo "DEPS=(${DEPS[*]})" >> $PKG_INFO
 
-PKG_FILE=$PKGS_OUTPUT/$PKG_NAME.psipkg
+    printf "$INFOsigning...";
+    # sign the package
+    PRIV_KEY=$PSI_ROOT/keychain/psi.pem
+    PUB_KEY=$PSI_ROOT/keychain/psi.pub
 
-tar -C $PKG_BUILD_DIR/package -czf $PKG_FILE ./
+    if [ -f "$PRIV_KEY" ]; then
+        echo "SIGNATURE=" >> $PKG_INFO
+        openssl dgst -sign $PRIV_KEY $PKG_FILE >> $PKG_INFO
+    else
+        echo "SIGNATURE=">> $PKG_INFO
+        echo "unsigned">> $PKG_INFO
+        >&2 printf "$ERROR WARNING! No private key: unsigned packages!\n"
+    fi
+    printf "$PASS signed\n";
 
-# create info file
-PKG_INFO=$PKGS_OUTPUT/$PKG_NAME.psipkg.info
+    printf "$PASS successfully built $PKG_NAME to $(basename $PKG_FILE)$RESET\n\n"
 
-echo "" > $PKG_INFO
-echo "NAME=$PKG_NAME" >> $PKG_INFO
-echo "PKG_FILE=$PKG_NAME.psipkg" >> $PKG_INFO
-echo "CHECKSUM=$(md5sum $PKG_FILE | awk '{ print $1 }')" >> $PKG_INFO
-echo "DATE=$(date)" >> $PKG_INFO
-echo "DEPS=(${DEPS[*]})" >> $PKG_INFO
+    clean
+}
 
-# sign the package
-PRIV_KEY=$PSI_ROOT/keychain/psi.pem
-PUB_KEY=$PSI_ROOT/keychain/psi.pub
 
-if [ -f "$PRIV_KEY" ]; then
-    echo "SIGNATURE=" >> $PKG_INFO
-    openssl dgst -sign $PRIV_KEY $PKG_FILE >> $PKG_INFO
-else
-    echo "SIGNATURE=">> $PKG_INFO
-    echo "unsigned">> $PKG_INFO
-    >&2 echo "WARNING! no private key: unsigned packages!"
-fi
-# clean up
-rm -rf $PKG_BUILD_DIR
-rmdir $PSI_ROOT/tmp
+FILES=$@
+
+for BUILD_FILE in $FILES; do
+    psibuild $BUILD_FILE
+done

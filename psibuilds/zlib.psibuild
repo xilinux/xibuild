@@ -1,0 +1,19 @@
+#!/bin/bash
+
+DEPS=(glibc)
+
+SOURCE=https://github.com/madler/zlib
+
+
+build () {
+    ./configure --prefix=/usr 
+    make
+    make check
+    make DESTDIR=$PKG_DEST install
+}
+
+package () {
+    # Remove a useless static library (lfs recommended)
+    rm -fv $PKG_DEST/usr/lib/libz.a 
+}
+
