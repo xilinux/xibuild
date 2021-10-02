@@ -2,23 +2,23 @@
 
 usage () {
  cat << EOF
-usage: $0 XIBUILD 
+usage: $0 PSIBUILD 
 EOF
 }
 
 BUILD_FILE=${@: -1}
 
-[[ $# = 0 ]] && usage && exit 1
-[ -f "$FILE" ] && echo "$BUILD_FILE not found" && exit 1
+[[ $# = 0 ]] && usage && epsit 1
+[ -f "$FILE" ] && echo "$BUILD_FILE not found" && epsit 1
 
 source $BUILD_FILE
 
-PKG_NAME=$(basename $BUILD_FILE .xibuild)
+PKG_NAME=$(basename $BUILD_FILE .psibuild)
 
-XI_ROOT=$(pwd)
-PKGS_OUTPUT=$XI_ROOT/xipackages
+PSI_ROOT=$(pwd)
+PKGS_OUTPUT=$PSI_ROOT/psipkgs
 
-PKG_BUILD_DIR=$XI_ROOT/tmp/$PKG_NAME
+PKG_BUILD_DIR=$PSI_ROOT/tmp/$PKG_NAME
 PKG_DEST=$PKG_BUILD_DIR/package
 
 # make the directories
@@ -32,28 +32,28 @@ package
 
 
 # go back to root, make things easier
-cd $XI_ROOT
+cd $PSI_ROOT
 
 # bundle the package to a targz in the output dir
 mkdir -p $PKGS_OUTPUT
 
-PKG_FILE=$PKGS_OUTPUT/$PKG_NAME.xipkg
+PKG_FILE=$PKGS_OUTPUT/$PKG_NAME.psipkg
 
 tar -C $PKG_BUILD_DIR/package -czf $PKG_FILE ./
 
 # create info file
-PKG_INFO=$PKGS_OUTPUT/$PKG_NAME.xipkg.info
+PKG_INFO=$PKGS_OUTPUT/$PKG_NAME.psipkg.info
 
 echo "" > $PKG_INFO
 echo "NAME=$PKG_NAME" >> $PKG_INFO
-echo "PKG_FILE=$PKG_NAME.xipkg" >> $PKG_INFO
+echo "PKG_FILE=$PKG_NAME.psipkg" >> $PKG_INFO
 echo "CHECKSUM=$(md5sum $PKG_FILE | awk '{ print $1 }')" >> $PKG_INFO
 echo "DATE=$(date)" >> $PKG_INFO
 echo "DEPS=(${DEPS[*]})" >> $PKG_INFO
 
 # sign the package
-PRIV_KEY=$XI_ROOT/keychain/xi.pem
-PUB_KEY=$XI_ROOT/keychain/xi.pub
+PRIV_KEY=$PSI_ROOT/keychain/psi.pem
+PUB_KEY=$PSI_ROOT/keychain/psi.pub
 
 if [ -f "$PRIV_KEY" ]; then
     echo "SIGNATURE=" >> $PKG_INFO
@@ -65,4 +65,4 @@ else
 fi
 # clean up
 rm -rf $PKG_BUILD_DIR
-rmdir $XI_ROOT/tmp
+rmdir $PSI_ROOT/tmp
