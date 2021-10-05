@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PSI_ROOT=$(pwd)
+XI_ROOT=$(pwd)
 
 ERROR="\033[0;31m"
 INFO="\033[0;34m"
@@ -13,14 +13,14 @@ alias make="make $MAKEFLAGS"
 
 usage () {
  cat << EOF
-usage: $0 PSIBUILD 
+usage: $0 XIBUILD 
 EOF
 }
 
-psibuild () {
+xibuild () {
     BUILD_FILE=${@: -1}
 
-    cd $PSI_ROOT
+    cd $XI_ROOT
 
     [[ $# = 0 ]] && usage && exit 1
     [ ! -f "$BUILD_FILE" ] && echo "$BUILD_FILE not found" && exit 1
@@ -28,7 +28,7 @@ psibuild () {
     clean () {
         # clean up
         rm -rf $PKG_BUILD_DIR
-        rmdir $PSI_ROOT/tmp > /dev/null 2>&1
+        rmdir $XI_ROOT/tmp > /dev/null 2>&1
     }
 
     build () {
@@ -40,14 +40,14 @@ psibuild () {
 
     source $BUILD_FILE
 
-    PKG_NAME=$(basename $BUILD_FILE .psibuild)
+    PKG_NAME=$(basename $BUILD_FILE .xibuild)
 
-    LOGFILE=$PSI_ROOT/logs/$PKG_NAME.log
-    PKGS_OUTPUT=$PSI_ROOT/ppkgs
-    PKG_FILE=$PKGS_OUTPUT/$PKG_NAME.ppkg
+    LOGFILE=$XI_ROOT/logs/$PKG_NAME.log
+    PKGS_OUTPUT=$XI_ROOT/xipkgs
+    PKG_FILE=$PKGS_OUTPUT/$PKG_NAME.xipkg
 
-    PKG_BUILD_DIR=$PSI_ROOT/tmp/$PKG_NAME
-    PKG_DEST=$PKG_PSI_ROOT/tmp/$PKG_NAME.package
+    PKG_BUILD_DIR=$XI_ROOT/tmp/$PKG_NAME
+    PKG_DEST=$PKG_XI_ROOT/tmp/$PKG_NAME.package
 
     # make sure build dir is clean before starting
     rm -rf $PKG_BUILD_DIR
@@ -56,11 +56,11 @@ psibuild () {
     mkdir -p $PKG_BUILD_DIR
     mkdir -p $PKG_DEST
     mkdir -p $PKGS_OUTPUT
-    mkdir -p $PSI_ROOT/logs
+    mkdir -p $XI_ROOT/logs
 
     date > $LOGFILE
     echo "Build log for $PKG_NAME from $BUILD_FILE\n" >> $LOGFILE
-    printf "\033[0;36m====> $PKG_NAME.ppkg\n" | tee -a $LOGFILE
+    printf "\033[0;36m====> $PKG_NAME.xipkg\n" | tee -a $LOGFILE
 
     cd $PKG_BUILD_DIR
 
@@ -97,19 +97,19 @@ psibuild () {
     
 
     # go back to root, make things easier
-    cd $PSI_ROOT
+    cd $XI_ROOT
 
     printf "$INFO\tarchiving package...";
     tar -C $PKG_DEST -czf $PKG_FILE ./ >> $LOGFILE 2>&1 && printf "$PASS archived to $(du -sh $PKG_FILE | awk '{ print $1 }')\n" || printf "$ERROR error! See log\n"
 
 
     # create info file
-    printf "$INFO\tcreating ppkg.info...";
-    PKG_INFO=$PKGS_OUTPUT/$PKG_NAME.ppkg.info
+    printf "$INFO\tcreating xipkg.info...";
+    PKG_INFO=$PKGS_OUTPUT/$PKG_NAME.xipkg.info
 
     echo "" > $PKG_INFO
     echo "NAME=$PKG_NAME" >> $PKG_INFO
-    echo "PKG_FILE=$PKG_NAME.ppkg" >> $PKG_INFO
+    echo "PKG_FILE=$PKG_NAME.xipkg" >> $PKG_INFO
     echo "CHECKSUM=$(md5sum $PKG_FILE | awk '{ print $1 }')" >> $PKG_INFO
     echo "VER_HASH=$VER_HASH" >> $PKG_INFO
     echo "SOURCE=$SOURCE" >> $PKG_INFO
@@ -118,8 +118,8 @@ psibuild () {
 
     printf "$INFOsigning...";
     # sign the package
-    PRIV_KEY=$PSI_ROOT/keychain/psi.pem
-    PUB_KEY=$PSI_ROOT/keychain/psi.pub
+    PRIV_KEY=$XI_ROOT/keychain/xi.pem
+    PUB_KEY=$XI_ROOT/keychain/xi.pub
 
     if [ -f "$PRIV_KEY" ]; then
         echo "SIGNATURE=" >> $PKG_INFO
@@ -140,5 +140,5 @@ psibuild () {
 FILES=$@
 
 for BUILD_FILE in $FILES; do
-    psibuild $BUILD_FILE
+    xibuild $BUILD_FILE
 done
