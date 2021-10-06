@@ -47,7 +47,7 @@ xibuild () {
     clean () {
         # clean up
         rm -rf $PKG_BUILD_DIR
-        rmdir $XI_ROOT/tmp > /dev/null 2>&1
+        rmdir $XI_ROOT/tMp > /dev/null 2>&1
     }
 
     build () {
