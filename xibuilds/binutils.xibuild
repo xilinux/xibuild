@@ -1,9 +1,9 @@
 #!/bin/bash
 
-DEPS=()
+DEPS=(glib zlib elfutils)
 
 SOURCE=git://sourceware.org/git/binutils.git
-
+DESC="tools for handling object files"
 
 build () {
     ./configure --prefix=/usr --disable-nls --disable-werror 

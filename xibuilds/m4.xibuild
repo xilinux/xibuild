@@ -3,12 +3,14 @@
 DEPS=(glibc bash)
 
 SOURCE=git://git.sv.gnu.org/m4
+DESC="the gnu m4 macro processor"
 
 
 build () {
+    git checkout branch-1.4
+    ./bootstrap
+
     ./configure --prefix=/usr 
     make
-    make check
     make DESTDIR=$PKG_DEST install
 }
-

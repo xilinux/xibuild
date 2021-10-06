@@ -3,6 +3,7 @@
 DEPS=(sh expect)
 
 SOURCE=git://git.sv.gnu.org/dejagnu.git
+DESC="a framework for running test suites on GNU tools"
 
 
 build () {

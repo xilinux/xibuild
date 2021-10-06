@@ -3,7 +3,7 @@
 DEPS=(readline)
 
 SOURCE=https://github.com/gavinhoward/bc
-
+DESC="An arbitrary precision numeric processing language"
 
 build () {
     CC=gcc ./configure --prefix=/usr -G -O3

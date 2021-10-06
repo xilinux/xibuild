@@ -1,16 +1,11 @@
 #!/bin/bash
 
-DEPS=(glibc )
+DEPS=(glibc zlib xz bzip2)
 
-SOURCE=https://github.com/file/file
-
+SOURCE=http://ftp.astron.com/pub/file/file-5.40.tar.gz
+DESC="a utility for determining the type of a given file or files"
 
 build () {
-    # cheating
-    wget http://ftp.astron.com/pub/file/file-5.40.tar.gz
-    tar -zxf file-5.40.tar.gz 
-    cd file-5.40
-
     ./configure --prefix=/usr 
     make
     make check

@@ -2,7 +2,8 @@
 
 DEPS=(glibc)
 
-SOURCE=https://sourceware.org/git/glibc.git
+SOURCE=https://ftp.gnu.org/gnu/glibc/glibc-2.34.tar.xz
+DESC="The main gnu C library providing basic routines and procedures"
 
 build () {
     # patches as recommended by lfs

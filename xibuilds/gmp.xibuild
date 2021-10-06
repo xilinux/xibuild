@@ -2,10 +2,11 @@
 
 DEPS=(gcc-libs sh)
 
-SOURCE=https://github.com/ryepdx/gmp
-
+SOURCE=https://gmplib.org/download/gmp/gmp-6.2.1.tar.lz
+DESC="a collection of mathematical libraries"
 
 build () {
+
     ./configure --prefix=/usr --enable-cxx --disable-static --docdir=/usr/share/doc/gmp
 
     make
@@ -17,9 +18,3 @@ build () {
     make DESTDIR=$PKG_DEST install
     make DESTDIR=$PKG_DEST install-html
 }
-
-package () {
-    ln -sv $PKG_DEST/usr/bin/flex $PKG_DEST/usr/bin/lex
-}
-
-

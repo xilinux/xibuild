@@ -1,0 +1,35 @@
+#!/bin/bash
+
+DEPS=(pam acl audit libcap libxcrypt)
+
+SOURCE=https://github.com/shadow-maint/shadow
+DESC="Password and account management tool suite with support for shadow files and PAM"
+
+build () {
+    sed -i 's/groups$(EXEEXT) //' src/Makefile.in
+    find man -name Makefile.in -exec sed -i 's/groups\.1 / /'   {} \;
+    find man -name Makefile.in -exec sed -i 's/getspnam\.3 / /' {} \;
+    find man -name Makefile.in -exec sed -i 's/passwd\.5 / /'   {} \;
+
+
+    sed -e 's:#ENCRYPT_METHOD DES:ENCRYPT_METHOD SHA512:' \
+    -e 's:/var/spool/mail:/var/mail:'                 \
+    -e '/PATH=/{s@/sbin:@@;s@/bin:@@}'                \
+    
+    sed -e "224s/rounds/min_rounds/" -i libmisc/salt.c
+
+    mkdir -p $PKG_DEST/usr/bin
+    touch $PKG_DEST/usr/bin/passwd
+    ./configure --sysconfdir=/etc --with-group-name-max-length=32
+
+    make
+
+    make exec_prefix=/usr DESTDIR=$PKG_DEST install
+
+    make DESTDIR=$PKG_DEST -C man install-man
+
+}
+
+package () {
+    mkdir -p $PKG_DEST/etc/default
+}

@@ -3,6 +3,7 @@
 DEPS=(glibc ncurses)
 
 SOURCE=https://git.savannah.gnu.org/git/readline.git
+DESC="a set of libraries that offer command line editing and history capabilities"
 
 
 build () {

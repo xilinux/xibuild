@@ -3,6 +3,7 @@
 DEPS=(glibc)
 
 SOURCE=https://github.com/madler/zlib
+DESC="compression and decompression routines used by some programs"
 
 
 build () {

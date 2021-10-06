@@ -1,0 +1,18 @@
+#!/bin/bash
+
+DEPS=(mpfr)
+
+SOURCE=http://www.multiprecision.org/downloads/mpc-1.2.0.tar.gz
+DESC="Library for the arithmetic of complex numbers with arbitrarily high precision"
+
+build () {
+    ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/mpc-1.2.0
+
+    make
+    make html
+
+    make check
+
+    make DESTDIR=$PKG_DEST install
+    make DESTDIR=$PKG_DEST install-html
+}

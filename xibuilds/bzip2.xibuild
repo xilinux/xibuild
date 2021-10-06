@@ -3,6 +3,7 @@
 DEPS=(glibc sh)
 
 SOURCE=git://sourceware.org/git/bzip2.git
+DESC="a selection of programs for compressing and decompressing bzip2 files"
 
 
 build () {

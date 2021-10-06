@@ -1,0 +1,16 @@
+#!/bin/bash
+
+DEPS=(glibc)
+SOURCE=https://gitlab.freedesktop.org/pkg-config/pkg-config
+
+DESC="a tool for passing the include path to build tools during configure and make phases of package installations"
+
+build () {
+    ./autogen.sh
+    ./configure --prefix=/usr --disable-host-tool --docdir=/usr/share/doc/pkg-config
+
+    make
+    make check
+
+    make DESTDIR=$PKG_DEST install
+}

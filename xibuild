@@ -17,13 +17,32 @@ usage: $0 XIBUILD
 EOF
 }
 
+extract () {
+    FILE=$1
+    echo extracting $FILE
+    case "${FILE#*.}" in 
+        "tar.gz" )
+            tar -zxf $FILE
+            ;;
+        "tar.lz" )
+            tar --lzip -xf "$FILE"
+            ;;
+        "zip" )
+            unzip $FILE
+            ;;
+        * )
+            tar -xf $FILE
+            ;;
+    esac
+}
+
 xibuild () {
     BUILD_FILE=${@: -1}
 
     cd $XI_ROOT
 
-    [[ $# = 0 ]] && usage && exit 1
-    [ ! -f "$BUILD_FILE" ] && echo "$BUILD_FILE not found" && exit 1
+    [[ $# = 0 ]] && usage && return 1
+    [ ! -f "$BUILD_FILE" ] && echo "$BUILD_FILE not found" && return 1
 
     clean () {
         # clean up
@@ -37,6 +56,7 @@ xibuild () {
     package () {
         echo "Passing missing package stage"
     }
+
 
     source $BUILD_FILE
 
@@ -60,7 +80,7 @@ xibuild () {
 
     date > $LOGFILE
     echo "Build log for $PKG_NAME from $BUILD_FILE\n" >> $LOGFILE
-    printf "\033[0;36m====> $PKG_NAME.xipkg\n" | tee -a $LOGFILE
+    printf "\033[0;36m====> $PKG_NAME.xipkg$RESET\n" | tee -a $LOGFILE
 
     cd $PKG_BUILD_DIR
 
@@ -68,7 +88,13 @@ xibuild () {
     ############
 
     # try get the commit hash for the package
-    VER_HASH=$(git ls-remote $SOURCE HEAD | awk '{ print $1 }')
+    if git ls-remote -q $SOURCE &> /dev/null; then
+        VER_HASH=$(git ls-remote $SOURCE HEAD )
+    else
+        VER_HASH=$(curl -Ls $SOURCE | md5sum)
+    fi
+    
+    VER_HASH=$(echo $VER_HASH | awk '{ print $1 }')
 
     # If we already have this package, don't waste our time
     if [ -f "$PKG_FILE.info" ] && [ -f "$PKG_FILE" ]; then
@@ -77,30 +103,37 @@ xibuild () {
         echo "Comparing $EXISTING_HASH to $VER_HASH" >> $LOGFILE
 
         printf "$INFO\tvalidating commit hash...";
-        if [ "$EXISTING_HASH" == "$VER_HASH" ]; then
-            printf "$NEUTRAL package exists\n"
-            return 0;
+        if echo "$EXISTING_HASH" | grep -q "$VER_HASH"; then
+            printf "$NEUTRAL package exists$RESET\n"
+            return;
         else 
             printf "$NEUTRAL package outdated\n"
         fi
     fi
 
     printf "$INFO\tfetching package...";
-    git clone $SOURCE . >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || printf "$ERROR error! See log\n"
+    if git ls-remote -q $SOURCE &> /dev/null; then
+        git clone $SOURCE . >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || return 1;
+    else
+        DOWNLOADED=$(basename $SOURCE)
+        curl -Ls $SOURCE > $DOWNLOADED
+        extract $DOWNLOADED >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || return 1;
+        cd $(ls -d */)
+    fi
 
     printf "$INFO\tbuilding package...";
-    build >> $LOGFILE 2>&1 && printf "$PASS built\n" || printf "$ERROR error! See log\n";
+    build >> $LOGFILE 2>&1 && printf "$PASS built\n" || return 1;
     
 
     printf "\033[0;34m\tpackaging package...\033[0m";
-    package >> $LOGFILE 2>&1 && printf "$PASS packaged\n" || printf "$ERROR error! See log\n"
+    package >> $LOGFILE 2>&1 && printf "$PASS packaged\n" ||  return 1;
     
 
     # go back to root, make things easier
     cd $XI_ROOT
 
     printf "$INFO\tarchiving package...";
-    tar -C $PKG_DEST -czf $PKG_FILE ./ >> $LOGFILE 2>&1 && printf "$PASS archived to $(du -sh $PKG_FILE | awk '{ print $1 }')\n" || printf "$ERROR error! See log\n"
+    tar -C $PKG_DEST -czf $PKG_FILE ./ >> $LOGFILE 2>&1 && printf "$PASS archived to $(du -sh $PKG_FILE | awk '{ print $1 }')\n" || return 1;
 
 
     # create info file
@@ -109,6 +142,7 @@ xibuild () {
 
     echo "" > $PKG_INFO
     echo "NAME=$PKG_NAME" >> $PKG_INFO
+    echo "DESCRIPTION=$DESC" >> $PKG_INFO
     echo "PKG_FILE=$PKG_NAME.xipkg" >> $PKG_INFO
     echo "CHECKSUM=$(md5sum $PKG_FILE | awk '{ print $1 }')" >> $PKG_INFO
     echo "VER_HASH=$VER_HASH" >> $PKG_INFO
@@ -131,14 +165,23 @@ xibuild () {
     fi
     printf "$PASS signed\n";
 
-    printf "$PASS successfully built $PKG_NAME to $(basename $PKG_FILE)$RESET\n\n"
+    printf "$PASS successfully built $PKG_NAME to $(basename $PKG_FILE)$RESET\n"
 
     clean
+    return 0
 }
 
 
-FILES=$@
+build-all () {
+    FILES=$@
 
-for BUILD_FILE in $FILES; do
-    xibuild $BUILD_FILE
-done
+    for BUILD_FILE in $FILES; do
+        xibuild $BUILD_FILE && printf "$RESET" || printf "$ERROR error! See log$RESET\n"
+        cd $XI_ROOT
+    done
+}
+
+if [ $# -gt 0 ]; then
+    build-all $@ | tee -a xibuild.log
+fi
+

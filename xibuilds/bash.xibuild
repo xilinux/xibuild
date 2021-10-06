@@ -3,6 +3,7 @@
 DEPS=(readline glibc ncurses)
 
 SOURCE=https://git.savannah.gnu.org/git/bash.git
+DESC="The free Bourne Again Shell"
 
 build () {
     ./configure --without-bash-malloc --prefix=/usr

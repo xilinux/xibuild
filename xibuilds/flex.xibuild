@@ -2,10 +2,11 @@
 
 DEPS=(glibc m4 sh)
 
-SOURCE=https://github.com/nlitsme/gnubc
-
+SOURCE=https://github.com/westes/flex
+DESC="a utility for generating programs that recognize patterns in text"
 
 build () {
+    ./autogen.sh
     ./configure --prefix=/usr --docdir=/usr/share/doc/flex --disable-static
     make
     make check

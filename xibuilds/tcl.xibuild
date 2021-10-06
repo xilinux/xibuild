@@ -3,6 +3,7 @@
 DEPS=(zlib)
 
 SOURCE=https://github.com/tcltk/tcl
+DESC="the Tool Command language, a robust general purpose scripting language"
 
 
 build () {

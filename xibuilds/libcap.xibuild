@@ -1,0 +1,21 @@
+#!/bin/bash
+
+DEPS=(glibc pam)
+
+SOURCE=https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-2.59.tar.gz
+
+DESC="POSIX 1003.1e capabilities"
+
+build () {
+    sed -i '/install -m.*STA/d' libcap/Makefile
+
+    make prefix=/usr lib=lib
+
+    make test
+    make prefix=/usr lib=lib DESTDIR=$PKG_DEST install
+
+}
+
+package() {
+    chmod -v 755 $PKG_DEST/usr/lib/lib{cap,psx}.so.*
+}

@@ -2,17 +2,11 @@
 
 DEPS=(glibc gcc-libs zlib xz lz4)
 
-SOURCE=https://github.com
-
+SOURCE=https://github.com/facebook/zstd
+DESC="the Zstandard real-time compression algorithm"
 
 build () {
     make
     make prefix=/usr check
     make DESTDIR=$PKG_DEST install
 }
-
-package () {
-    # Remove a useless static library (lfs recommended)
-    rm -v $PKG_DEST/usr/lib/libzstd.a
-}
-

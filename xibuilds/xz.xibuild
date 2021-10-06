@@ -3,9 +3,11 @@
 DEPS=(sh)
 
 SOURCE=https://git.tukaani.org/xz.git
+DESC="a selection of programs for compressing and decompressing files with the lzma and xz compression formats"
 
 
 build () {
+    ./autogen.sh
     ./configure --prefix=/usr --disable-static --docdir=$PKG_DEST/usr/share/doc/xz-5.2.5
     make
     make check

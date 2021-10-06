@@ -1,0 +1,34 @@
+#!/bin/bash
+
+DEPS=(glibc)
+
+SOURCE=https://invisible-mirror.net/archives/ncurses/ncurses-6.2.tar.gz
+
+DESC="curses emulation library"
+
+build () {
+    ./configure --prefix=/usr --mandir=/usr/share/man --with-shared --without-debug --without-normal --enable-pc-files --enable-widec
+
+    make
+
+    make DESTDIR=$PKG_DEST install
+}
+
+
+package () {
+    for lib in ncurses form panel menu ; do
+        rm -vf                    $PKG_DEST/usr/lib/lib${lib}.so
+        echo "INPUT(-l${lib}w)" > $PKG_DEST/usr/lib/lib${lib}.so
+        ln -sfv ${lib}w.pc        $PKG_DEST/usr/lib/pkgconfig/${lib}.pc
+        rm -vf                     /usr/lib/libcursesw.so
+    done
+
+    echo "INPUT(-lncursesw)" > $PKG_DEST/usr/lib/libcursesw.so
+    ln -sfv libncurses.so      $PKG_DEST/usr/lib/libcurses.so
+
+
+    rm -fv $PKG_DEST/usr/lib/libncurses++w.a
+
+    mkdir -v       $PKG_DEST/usr/share/doc/ncurses-6.2
+    cp -v -R doc/* $PKG_DEST/usr/share/doc/ncurses-6.2
+}

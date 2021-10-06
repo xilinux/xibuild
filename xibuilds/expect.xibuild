@@ -3,7 +3,7 @@
 DEPS=(tcl)
 
 SOURCE=https://github.com/aeruder/expect
-
+DESC="tools for automating interactive applications"
 
 build () {
     # note: --with-tcl, we might want to make a way to use the tcl that we've compiled in another package
