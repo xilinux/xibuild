@@ -32,6 +32,10 @@ extract () {
     esac
 }
 
+pkgname () {
+    echo $(basename $1 .xibuild)
+}
+
 xibuild () {
     BUILD_FILE=${@: -1}
 
@@ -56,7 +60,7 @@ xibuild () {
 
     source $BUILD_FILE
 
-    PKG_NAME=$(basename $BUILD_FILE .xibuild)
+    PKG_NAME=$(pkgname $BUILD_FILE)
 
     LOGFILE=$XI_ROOT/logs/$PKG_NAME.log
     PKG_FILE=$PKGS_OUTPUT/$PKG_NAME.xipkg
@@ -100,6 +104,7 @@ xibuild () {
         printf "$INFO\tvalidating commit hash...";
         if echo "$EXISTING_HASH" | grep -q "$VER_HASH"; then
             printf "$NEUTRAL package exists$RESET\n"
+            echo "exists $PKG_NAME $DESC" >> $REPORT_LOG
             return;
         else 
             printf "$NEUTRAL package outdated\n"
@@ -161,6 +166,7 @@ xibuild () {
     printf "$PASS successfully built $PKG_NAME to $(basename $PKG_FILE)$RESET\n"
 
     clean
+    echo "new $PKG_NAME $DESC" >> $REPORT_LOG
     return 0
 }
 
@@ -195,7 +201,14 @@ build-all () {
                 usage
                 ;;
             * )
-                xibuild $1 && printf "$RESET" || printf "$ERROR error! See log$RESET\n"
+                REPORT_LOG=$XI_ROOT/xibuild.report.log
+                BUILD_FILE=$1
+                if xibuild $BUILD_FILE; then 
+                    printf "$RESET"
+                else
+                    printf "$ERROR error! See log$RESET\n"
+                    echo "fail $PKG_NAME $DESC" >> $REPORT_LOG
+                fi
                 cd $XI_ROOT
                 ;;
         esac
@@ -205,5 +218,7 @@ build-all () {
 }
 if [ $# -gt 0 ]; then
     build-all $@ | tee -a xibuild.log
+else
+    usage; return 1
 fi
 
