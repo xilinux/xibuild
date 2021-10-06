@@ -1,6 +1,8 @@
 #!/bin/bash
 
 XI_ROOT=$(pwd)
+PKGS_OUTPUT=$XI_ROOT/xipkgs
+PRIV_KEY=$XI_ROOT/keychain/xi.pem
 
 ERROR="\033[0;31m"
 INFO="\033[0;34m"
@@ -10,12 +12,6 @@ RESET="\033[0m"
 
 MAKEFLAGS="-j11"
 alias make="make $MAKEFLAGS"
-
-usage () {
- cat << EOF
-usage: $0 XIBUILD 
-EOF
-}
 
 extract () {
     FILE=$1
@@ -63,11 +59,10 @@ xibuild () {
     PKG_NAME=$(basename $BUILD_FILE .xibuild)
 
     LOGFILE=$XI_ROOT/logs/$PKG_NAME.log
-    PKGS_OUTPUT=$XI_ROOT/xipkgs
     PKG_FILE=$PKGS_OUTPUT/$PKG_NAME.xipkg
 
     PKG_BUILD_DIR=$XI_ROOT/tmp/$PKG_NAME
-    PKG_DEST=$PKG_XI_ROOT/tmp/$PKG_NAME.package
+    PKG_DEST=$XI_ROOT/tmp/$PKG_NAME.package
 
     # make sure build dir is clean before starting
     rm -rf $PKG_BUILD_DIR
@@ -152,8 +147,6 @@ xibuild () {
 
     printf "$INFOsigning...";
     # sign the package
-    PRIV_KEY=$XI_ROOT/keychain/xi.pem
-    PUB_KEY=$XI_ROOT/keychain/xi.pub
 
     if [ -f "$PRIV_KEY" ]; then
         echo "SIGNATURE=" >> $PKG_INFO
@@ -171,16 +164,45 @@ xibuild () {
     return 0
 }
 
+usage () {
+ cat << EOF
+usage: $0 [-h] [-o output-dir] [-r working_root]  [-k private_key.pem] build_file.xibuild
+    -h          display this help message
+    -o          set the output dir for the xipkg files (default: $PWD/xipkgs)
+    -r          set the working root for all log and tmp files (default: $PWD)
+    -k          set the private key used to sign packages (default: $PWD/keychain/xi.pem)
+EOF
+}
 
 build-all () {
     FILES=$@
 
-    for BUILD_FILE in $FILES; do
-        xibuild $BUILD_FILE && printf "$RESET" || printf "$ERROR error! See log$RESET\n"
-        cd $XI_ROOT
+    while test $# -gt 0; do
+        case "$1" in
+            "-o" )
+                shift
+                PKGS_OUTPUT=$PWD/$1
+                ;;
+            "-r" )
+                shift
+                XI_ROOT=$PWD/$1
+                ;;
+            "-k" )
+                shift
+                PRIV_KEY=$PWD/$1
+                ;;
+            "-h" )
+                usage
+                ;;
+            * )
+                xibuild $1 && printf "$RESET" || printf "$ERROR error! See log$RESET\n"
+                cd $XI_ROOT
+                ;;
+        esac
+
+        shift
     done
 }
-
 if [ $# -gt 0 ]; then
     build-all $@ | tee -a xibuild.log
 fi
