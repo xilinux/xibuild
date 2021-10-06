@@ -38,11 +38,20 @@ start-index () {
     echo "<html>
     <head>
         <title>packages for $1</title>
-        <link rel='stylesheet' type='text/css' href='/style.css'>
+        <style>$(cat style.css)</style>
     </head>
     <body>
     <h1>Packages in <a href='../'>$1</a></h1>
-    <table>" > $2
+    <table>
+    <tr>
+        <td>name</td>
+        <td>xibuild</td>
+        <td>build log</td>
+        <td>description</td>
+        <td>file</td>
+        <td>info file</td>
+    </tr>
+    " > $2
 }
 
 extend-index () {
@@ -51,17 +60,17 @@ extend-index () {
 
     COLOR="none"
     if grep $PKG_NAME xibuild.report.log | grep -q new; then 
-        COLOR="lime"
+        COLOR="pass"
     fi
     if grep $PKG_NAME xibuild.report.log | grep -q fail; then
-        if [ ! -f $DEST ]; then 
-            COLOR="orange"
+        if [ -f $DEST ]; then 
+            COLOR="warning"
         else
-            COLOR="red"
+            COLOR="fail"
         fi
     fi
     echo "
-        <tr style='background-color: $COLOR'>
+        <tr class='$COLOR'>
             <td>$PKG_NAME</td>
             <td><a href='src/$PKG_NAME.xibuild'>src</a></td>
             <td><a href='logs/$PKG_NAME.log'>log</a></td>
@@ -79,10 +88,10 @@ conclude-index () {
 
     <h3>Legend:</h3>
     <ul>
-        <li style='background-color: none'>build skipped; no updates</li>
-        <li style='background-color: red'>build failed; no previous version</li>
-        <li style='background-color: orange'>build failed; previous version exists</li>
-        <li style='background-color: lime'>build passed: new update</li>
+        <li>build skipped; no updates</li>
+        <li class='fail'>build failed; no previous version</li>
+        <li class='warning'>build failed; previous version exists</li>
+        <li class='pass'>build passed: new update</li>
     </ul>
     </body>
     </html>
