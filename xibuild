@@ -57,6 +57,7 @@ xibuild () {
         echo "Passing missing package stage"
     }
 
+    BRANCH=HEAD
 
     source $BUILD_FILE
 
@@ -88,7 +89,7 @@ xibuild () {
 
     # try get the commit hash for the package
     if git ls-remote -q $SOURCE &> /dev/null; then
-        VER_HASH=$(git ls-remote $SOURCE HEAD )
+        VER_HASH=$(git ls-remote $SOURCE $BRANCH )
     else
         VER_HASH=$(curl -Ls $SOURCE | md5sum)
     fi
@@ -112,8 +113,9 @@ xibuild () {
     fi
 
     printf "$INFO\tfetching package...";
-    if git ls-remote -q $SOURCE &> /dev/null; then
+    if git ls-remote -q $SOURCE $BRANCH &> /dev/null; then
         git clone $SOURCE . >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || return 1;
+        git checkout $BRANCH >> $LOGFILE 2>&1 
     else
         DOWNLOADED=$(basename $SOURCE)
         curl -Ls $SOURCE > $DOWNLOADED
@@ -221,4 +223,3 @@ if [ $# -gt 0 ]; then
 else
     usage; return 1
 fi
-
