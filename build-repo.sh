@@ -9,7 +9,7 @@ fetch () {
 }
 
 build () {
-    for REPO in $(du -h xipkgs/repo/* | awk '{print $2}' | sort -r); do
+    for REPO in $(du -h xipkgs/repo/* | awk '{print $2}' | sort -r ); do
         REPO_NAME=$(echo $REPO | cut -d"/" -f2-)
 
         REPO_INDEX=dist/$REPO_NAME/index.html
@@ -129,6 +129,7 @@ sync () {
 
 # update the repository
 
+clean
 fetch
 build
 clean
