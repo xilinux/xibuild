@@ -63,7 +63,7 @@ extend-index () {
         COLOR="pass"
     fi
     if grep $PKG_NAME xibuild.report.log | grep -q fail; then
-        if [ -f $DEST ]; then 
+        if [ -f dist/$REPO_NAME/$PKG_NAME.xipkg ]; then 
             COLOR="warning"
         else
             COLOR="fail"
