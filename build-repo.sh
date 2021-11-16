@@ -13,7 +13,8 @@ build () {
         REPO_NAME=$(echo $REPO | cut -d"/" -f2-)
 
         REPO_INDEX=dist/$REPO_NAME/index.html
-        REPO_LIST=dist/$REPO_NAME/packages.txt
+        REPO_LIST_OLD=dist/$REPO_NAME/packages.txt
+        REPO_LIST=dist/$REPO_NAME/packages.list
         
         start-index $REPO_NAME $REPO_INDEX
 
@@ -101,6 +102,11 @@ conclude-index () {
 generate-package-list () {
     cd dist/$REPO_NAME
     ls -1 *.xipkg.info > packages.txt
+
+    echo "" > packages.list
+    for file in $(ls -1 *.xipkg); do
+        echo "$file $(md5sum $file)" >> packages.list
+    done;
     cd -
 }
 
@@ -112,7 +118,8 @@ add-additional () {
     mv $REPO/* dist/$REPO_NAME/src/
     
     # add key for whole repo
-    cp keychain/xi.pub dist/repo/
+    mkdir dist/keychain
+    cp keychain/xi.pub dist/keychain/
 }
 
 clean () {
