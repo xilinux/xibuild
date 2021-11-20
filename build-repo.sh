@@ -9,6 +9,7 @@ fetch () {
 }
 
 build () {
+
     REPOS_INDEX=dist/repo/index.html
     rm $REPOS_INDEX
 
@@ -152,11 +153,20 @@ sync () {
     [[ $# = 0 ]] || rsync -vLta --no-perms --no-owner --no-group --delete -z -e ssh ./dist/ $1
 }
 
+index () {
+    INDEX=dist/index.html
+    rm $INDEX
+
+    echo-head "xilinux" >> $INDEX
+    cat index.html >> $INDEX
+}
+
 
 # update the repository
 
 clean
 fetch
 build
+index
 clean
 sync $@
