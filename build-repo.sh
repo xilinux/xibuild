@@ -9,6 +9,12 @@ fetch () {
 }
 
 build () {
+    REPOS_INDEX=dist/repo/index.html
+    rm $REPOS_INDEX
+
+    echo-head "repo" >> $REPOS_INDEX
+    echo "<h1>repo</h1>" >> $REPOS_INDEX
+
     for REPO in $(du -h xipkgs/repo/* | awk '{print $2}' | sort -r ); do
         REPO_NAME=$(echo $REPO | cut -d"/" -f2-)
 
@@ -32,16 +38,28 @@ build () {
 
         generate-package-list
         add-additional 
+        
+        echo "<a href='/$REPO_NAME'><h2>$REPO_NAME</h2><a> " >> $REPOS_INDEX
+
+
+        echo "<p>package count: <strong>$(ls dist/$REPO_NAME/*.xipkg | wc -l)</strong></p>" >> $REPOS_INDEX
     done;
+
+    echo ""
 }
 
-start-index () {
+echo-head () {
     echo "<html>
     <head>
-        <title>packages for $1</title>
+        <title>$1</title>
         <style>$(cat style.css)</style>
-    </head>
-    <body>
+        </head>
+        <body>"
+}
+
+start-index() {
+    echo-head "packages for $1" > $2
+    echo "
     <h1>Packages in <a href='../'>$1</a></h1>
     <table>
     <tr>
@@ -52,7 +70,7 @@ start-index () {
         <td>file</td>
         <td>info file</td>
     </tr>
-    " > $2
+    " >> $2
 }
 
 extend-index () {
@@ -119,7 +137,8 @@ add-additional () {
     
     # add key for whole repo
     mkdir dist/keychain
-    cp keychain/xi.pub dist/keychain/
+    cp keychain/keys.list dist/keychain/
+    cp keychain/*.pub dist/keychain/
 }
 
 clean () {
