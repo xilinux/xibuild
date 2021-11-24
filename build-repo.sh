@@ -150,7 +150,9 @@ clean () {
 }
 
 sync () {
-    [[ $# = 0 ]] || rsync -vLta --no-perms --no-owner --no-group --delete -z -e ssh ./dist/ $1
+    for i in $@; do
+        [[ $# = 0 ]] || rsync -vLta --no-perms --no-owner --no-group --delete -z -e ssh ./dist/ $i
+    done;
 }
 
 index () {
