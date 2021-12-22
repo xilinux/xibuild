@@ -26,12 +26,18 @@ build () {
         start-index $REPO_NAME $REPO_INDEX
 
         printf "" > xibuild.report.log
-        for BUILD_FILE in $REPO/*; do
-            DEST=dist/$REPO_NAME
+        for BUILD_FILE in $REPO/*.xibuild; do
+            if [ ${#ONLY[@]} == 0 ] || ( echo ${ONLY[*]} | grep -q $(basename -s .xibuild $BUILD_FILE)); then
 
-            $XIBUILD -o $DEST $BUILD_FILE
-            
-            extend-index $BUILD_FILE $REPO_INDEX
+                DEST=dist/$REPO_NAME
+
+                $XIBUILD -o $DEST $BUILD_FILE
+                
+                extend-index $BUILD_FILE $REPO_INDEX
+
+            else
+                echo "skipping $BUILD_FILE"
+            fi
         done;
 
         rm xibuild.report.log
@@ -171,4 +177,3 @@ fetch
 build
 index
 clean
-sync $@
