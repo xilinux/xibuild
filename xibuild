@@ -132,9 +132,18 @@ xibuild () {
     build >> $LOGFILE 2>&1 && printf "$PASS built\n" || return 1;
     
 
+
     printf "\033[0;34m\tpackaging package...\033[0m";
     package >> $LOGFILE 2>&1 && printf "$PASS packaged\n" ||  return 1;
     
+    # add postinstall script
+    POSTINSTALL=$(type postinstall | sed '1,3d;$d')
+    if [ ${#POSTINSTALL} != 0 ]; then
+        POST_DIR=$PKG_DEST/tmp/xi/postinstall
+        mkdir -p $POST_DIR
+        echo "#!/bin/sh" > $POST_DIR/$PKG_NAME.sh
+        echo $POSTINSTALL >> $POST_DIR/$PKG_NAME.sh
+    fi
 
     # go back to root, make things easier
     cd $XI_ROOT
