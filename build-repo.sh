@@ -3,7 +3,9 @@
 XIBUILD=./xibuild
 
 fetch () {
-    git clone https://git.davidovski.xyz/xilinux/xipkgs
+    #git clone https://git.davidovski.xyz/xilinux/xipkgs
+
+    rsync -r ../buildfiles/ xipkgs
 
     mkdir dist
 }
@@ -34,9 +36,6 @@ build () {
                 $XIBUILD -o $DEST $BUILD_FILE
                 
                 extend-index $BUILD_FILE $REPO_INDEX
-
-            else
-                echo "skipping $BUILD_FILE"
             fi
         done;
 
@@ -151,13 +150,14 @@ add-additional () {
 clean () {
     rm -rf xipkgs
     rm -rf logs
+    chmod -R 777 tmp
     rm -rf tmp
     rm -rf xibuild.log
 }
 
 sync () {
     for i in $@; do
-        [[ $# = 0 ]] || rsync -vLta --no-perms --no-owner --no-group --delete -z -e ssh ./dist/ $i
+        [[ $# = 0 ]] || rsync -Lta --no-perms --no-owner --no-group --delete -z -e ssh ./dist/ $i
     done;
 }
 

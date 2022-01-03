@@ -137,8 +137,8 @@ xibuild () {
     package >> $LOGFILE 2>&1 && printf "$PASS packaged\n" ||  return 1;
     
     # add postinstall script
-    if command -v postinstall; then
-        POSTINSTALL=$( && type postinstall | sed '1,3d;$d')
+    if command -v postinstall > /dev/null; then
+        POSTINSTALL=$(type postinstall | sed '1,3d;$d')
         if [ ${#POSTINSTALL} != 0 ]; then
             POST_DIR=$PKG_DEST/tmp/xi/postinstall
             mkdir -p $POST_DIR
