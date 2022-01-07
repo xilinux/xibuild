@@ -129,7 +129,7 @@ generate-package-list () {
 
     echo "" > packages.list
     for file in $(ls -1 *.xipkg); do
-        echo "$file $(md5sum $file)" >> packages.list
+        echo "$file $(md5sum $file | awk '{print $1}') $(du -s $file | awk '{print $1}') $(gzip -cd $file | tar -tvv | grep -c ^-)" >> packages.list
     done;
     cd -
 }
@@ -150,7 +150,6 @@ add-additional () {
 clean () {
     rm -rf xipkgs
     rm -rf logs
-    chmod -R 777 tmp
     rm -rf tmp
     rm -rf xibuild.log
 }

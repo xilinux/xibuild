@@ -156,7 +156,7 @@ xibuild () {
     fi
 
     printf "$INFO\tarchiving package...";
-    tar -C $PKG_DEST -czf $PKG_FILE ./ >> $LOGFILE 2>&1 && printf "$PASS archived to $(du -sh $PKG_FILE | awk '{ print $1 }')\n" || return 1;
+    tar -C $PKG_DEST -cvzf $PKG_FILE ./ >> $LOGFILE 2>&1 && printf "$PASS archived to $(du -sh $PKG_FILE | awk '{ print $1 }')\n" || return 1;
 
 
     # create info file
