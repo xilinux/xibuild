@@ -21,6 +21,9 @@ build () {
         REPO_INDEX=dist/$REPO_NAME/index.html
         REPO_LIST_OLD=dist/$REPO_NAME/packages.txt
         REPO_LIST=dist/$REPO_NAME/packages.list
+        mkdir -pv dist/$REPO_NAME
+        mkdir -pv dist/$REPO_NAME/logs
+        mkdir -pv dist/$REPO_NAME/src
         touch $REPO_INDEX
         touch $REPO_LIST_OLD
         touch $REPO_LIST
