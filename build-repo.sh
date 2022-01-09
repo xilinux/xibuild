@@ -1,12 +1,9 @@
-#!/bin/bash
+!/bin/bash
 
 XIBUILD=./xibuild
 
 fetch () {
-    #git clone https://git.davidovski.xyz/xilinux/xipkgs
-
-    rsync -r ../buildfiles/ xipkgs
-
+    git clone https://git.davidovski.xyz/xilinux/buildfiles 
     mkdir dist
 }
 
@@ -18,12 +15,15 @@ build () {
     echo-head "repo" >> $REPOS_INDEX
     echo "<h1>repo</h1>" >> $REPOS_INDEX
 
-    for REPO in $(du -h xipkgs/repo/* | awk '{print $2}' | sort -r ); do
+    for REPO in $(du -h buildfiles/repo/* | awk '{print $2}' | sort -r ); do
         REPO_NAME=$(echo $REPO | cut -d"/" -f2-)
 
         REPO_INDEX=dist/$REPO_NAME/index.html
         REPO_LIST_OLD=dist/$REPO_NAME/packages.txt
         REPO_LIST=dist/$REPO_NAME/packages.list
+        touch $REPO_INDEX
+        touch $REPO_LIST_OLD
+        touch $REPO_LIST
         
         start-index $REPO_NAME $REPO_INDEX
 
@@ -136,6 +136,7 @@ generate-package-list () {
 
 add-additional () {
     # move logs and sources
+    mkdir -pv dist/$REPO_NAME/logs
     mv logs/* dist/$REPO_NAME/logs
     
     mkdir -p dist/$REPO_NAME/src
@@ -148,7 +149,7 @@ add-additional () {
 }
 
 clean () {
-    rm -rf xipkgs
+    rm -rf buildfiles
     rm -rf logs
     rm -rf tmp
     rm -rf xibuild.log
