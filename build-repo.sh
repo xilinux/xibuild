@@ -35,11 +35,9 @@ build () {
             if [ ${#ONLY[@]} == 0 ] || ( echo ${ONLY[*]} | grep -q $(basename -s .xibuild $BUILD_FILE)); then
 
                 DEST=dist/$REPO_NAME
-
                 $XIBUILD -o $DEST $BUILD_FILE
-                
-                extend-index $BUILD_FILE $REPO_INDEX
             fi
+            extend-index $BUILD_FILE $REPO_INDEX
         done;
 
         rm xibuild.report.log
@@ -160,6 +158,7 @@ clean () {
 
 sync () {
     for i in $@; do
+        echo "syncing to $@"
         [[ $# = 0 ]] || rsync -Lta --no-perms --no-owner --no-group --delete -z -e ssh ./dist/ $i
     done;
 }
