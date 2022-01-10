@@ -158,7 +158,7 @@ clean () {
 
 sync () {
     for i in $@; do
-        echo "syncing to $@"
+        echo "syncing to $i"
         [[ $# = 0 ]] || rsync -Lta --no-perms --no-owner --no-group --delete -z -e ssh ./dist/ $i
     done;
 }
