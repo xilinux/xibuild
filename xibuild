@@ -108,6 +108,7 @@ xibuild () {
         if echo "$EXISTING_HASH" | grep -q "$VER_HASH"; then
             printf "$NEUTRAL package exists$RESET\n"
             echo "exists $PKG_NAME $DESC" >> $REPORT_LOG
+            rm $LOGFILE
             return;
         else 
             printf "$NEUTRAL package outdated\n"
