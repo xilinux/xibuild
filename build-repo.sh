@@ -85,10 +85,10 @@ extend-index () {
     DESC=$(grep $PKG_NAME xibuild.report.log | cut -d" " -f3-)
 
     COLOR="none"
-    if grep $PKG_NAME xibuild.report.log | grep -q "^new"; then 
+    if tail -1 xibuild.report.log | grep -q "^new"; then 
         COLOR="pass"
     fi
-    if grep $PKG_NAME xibuild.report.log | grep -q "^fail"; then
+    if tail -1 xibuild.report.log | grep -q "^fail"; then
         if [ -f dist/$REPO_NAME/$PKG_NAME.xipkg ]; then 
             COLOR="warning"
         else
