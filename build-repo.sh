@@ -17,13 +17,14 @@ build () {
 
     for REPO in $(du -h buildfiles/repo/* | awk '{print $2}' | sort -r ); do
         REPO_NAME=$(echo $REPO | cut -d"/" -f2-)
+        REPO_DIR=$(realpath dist/$REPO_NAME)
 
-        REPO_INDEX=dist/$REPO_NAME/index.html
-        REPO_LIST_OLD=dist/$REPO_NAME/packages.txt
-        REPO_LIST=dist/$REPO_NAME/packages.list
-        mkdir -pv dist/$REPO_NAME
-        mkdir -pv dist/$REPO_NAME/logs
-        mkdir -pv dist/$REPO_NAME/src
+        REPO_INDEX=$REPO_DIR/index.html
+        REPO_LIST_OLD=$REPO_DIR/packages.txt
+        REPO_LIST=$REPO_DIR/packages.list
+        mkdir -pv $REPO_DIR
+        mkdir -pv $REPO_DIR/logs
+        #mkdir -pv dist/$REPO_NAME/src
         touch $REPO_INDEX
         touch $REPO_LIST_OLD
         touch $REPO_LIST
@@ -98,7 +99,7 @@ extend-index () {
     echo "
         <tr class='$COLOR'>
             <td>$PKG_NAME</td>
-            <td><a href='src/$PKG_NAME.xibuild'>src</a></td>
+            <td><a href='$PKG_NAME.xibuild'>src</a></td>
             <td><a href='logs/$PKG_NAME.log'>log</a></td>
             <td>$DESC</td>
             <td><a href='$PKG_NAME.xipkg'>$PKG_NAME.xipkg</a></td>
@@ -140,8 +141,8 @@ add-additional () {
     mkdir -pv dist/$REPO_NAME/logs
     mv logs/* dist/$REPO_NAME/logs
     
-    mkdir -p dist/$REPO_NAME/src
-    mv $REPO/* dist/$REPO_NAME/src/
+    #mkdir -p dist/$REPO_NAME/src
+    #mv $REPO/* dist/$REPO_NAME/src/
     
     # add key for whole repo
     mkdir dist/keychain

@@ -38,11 +38,14 @@ pkgname () {
 
 xibuild () {
     BUILD_FILE=${@: -1}
+    BUILD_HASH=$(md5sum $BUILD_FILE | cut -f1 -d" ")
 
     cd $XI_ROOT
 
     [[ $# = 0 ]] && usage && return 1
     [ ! -f "$BUILD_FILE" ] && echo "$BUILD_FILE not found" && return 1
+
+    BUILD_FILE_PATH=$(realpath $BUILD_FILE)
 
     clean () {
         # clean up
@@ -50,8 +53,14 @@ xibuild () {
         rmdir $XI_ROOT/tmp > /dev/null 2>&1
     }
 
+    patch () {
+        echo "Passing missing patch stage"
+    }
     build () {
         printf "\tpassing missing build stage..."
+    }
+    check () {
+        echo "Passing missing check stage"
     }
     package () {
         echo "Passing missing package stage"
@@ -87,52 +96,62 @@ xibuild () {
     # fetch, build then package the package
     ############
 
-    # try get the commit hash for the package
-    if git ls-remote -q $SOURCE &> /dev/null; then
-        VER_HASH=$(git ls-remote $SOURCE $BRANCH )
-    elif hg identify $SOURCE &> /dev/null; then
-        VER_HASH=$(hg identify $SOURCE)
-    else
-        VER_HASH=$(curl -Ls $SOURCE | md5sum)
-    fi
-    
-    VER_HASH=$(echo $VER_HASH | awk '{ print $1 }')
-
-    # If we already have this package, don't waste our time
-    if [ -f "$PKG_FILE.info" ] && [ -f "$PKG_FILE" ]; then
-        EXISTING_HASH=$(grep -a "VER_HASH" $PKG_FILE.info | sed "s/VER_HASH=//")
-
-        echo "Comparing $EXISTING_HASH to $VER_HASH" >> $LOGFILE
-
-        printf "$INFO\tvalidating commit hash...";
-        if echo "$EXISTING_HASH" | grep -q "$VER_HASH"; then
-            printf "$NEUTRAL package exists$RESET\n"
-            echo "exists $PKG_NAME $DESC" >> $REPORT_LOG
-            rm $LOGFILE
-            return;
-        else 
-            printf "$NEUTRAL package outdated\n"
+    if [ ! -z ${SOURCE+x} ]; then
+        # try get the commit hash for the package
+        if git ls-remote -q $SOURCE &> /dev/null; then
+            VER_HASH=$(git ls-remote $SOURCE $BRANCH )
+        elif hg identify $SOURCE &> /dev/null; then
+            VER_HASH=$(hg identify $SOURCE)
+        else
+            VER_HASH=$(curl -Ls $SOURCE | md5sum)
         fi
-    fi
+        
+        VER_HASH=$(echo $VER_HASH | awk '{ print $1 }')
 
-    printf "$INFO\tfetching package...";
-    if git ls-remote -q $SOURCE $BRANCH &> /dev/null; then
-        git clone $SOURCE . >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || return 1;
-        git checkout $BRANCH >> $LOGFILE 2>&1 
+        # If we already have this package, don't waste our time
+        if [ -f "$PKG_FILE.info" ] && [ -f "$PKG_FILE" ]; then
+            EXISTING_HASH=$(grep -a "VER_HASH" $PKG_FILE.info | sed "s/VER_HASH=//")
 
-    elif hg identify $SOURCE &> /dev/null; then
-        hg clone $SOURCE . >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || return 1;
+            echo "Comparing $EXISTING_HASH to $VER_HASH" >> $LOGFILE
+
+            printf "$INFO\tvalidating commit hash...";
+
+            EXISTING_BUILD_HASH=$(md5sum $PKGS_OUTPUT/$PKG_NAME.xibuild | cut -f1 -d" ")
+            if [ "$EXISTING_HASH" = "$VER_HASH" ] && [ "$EXISTING_BUILD_HASH" = "$BUILD_HASH" ]; then
+                printf "$NEUTRAL package exists$RESET\n"
+                echo "exists $PKG_NAME $DESC" >> $REPORT_LOG
+                rm $LOGFILE
+                return;
+            else 
+                printf "$NEUTRAL package outdated\n"
+            fi
+        fi
+
+        printf "$INFO\tfetching package...";
+        if git ls-remote -q $SOURCE $BRANCH &> /dev/null; then
+            git clone $SOURCE . >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || return 1;
+            git checkout $BRANCH >> $LOGFILE 2>&1 
+
+        elif hg identify $SOURCE &> /dev/null; then
+            hg clone $SOURCE . >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || return 1;
+        else
+            DOWNLOADED=$(basename $SOURCE)
+            curl -Ls $SOURCE > $DOWNLOADED
+            extract $DOWNLOADED >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || return 1;
+            cd $(ls -d */)
+        fi
     else
-        DOWNLOADED=$(basename $SOURCE)
-        curl -Ls $SOURCE > $DOWNLOADED
-        extract $DOWNLOADED >> $LOGFILE 2>&1 && printf "$PASS fetched $(du -sh $PKG_BUILD_DIR | awk '{ print $1 }') source\n" || return 1;
-        cd $(ls -d */)
+        SOURCE="none"
     fi
+
+    printf "\033[0;34m\tpatching package...\033[0m";
+    patch >> $LOGFILE 2>&1 && printf "$PASS patched\n" ||  return 1;
 
     printf "$INFO\tbuilding package...";
     build >> $LOGFILE 2>&1 && printf "$PASS built\n" || return 1;
-    
 
+    printf "\033[0;34m\ttesting package...\033[0m";
+    check >> $LOGFILE 2>&1 && printf "$PASS checked\n" ||  return 1;
 
     printf "\033[0;34m\tpackaging package...\033[0m";
     package >> $LOGFILE 2>&1 && printf "$PASS packaged\n" ||  return 1;
@@ -151,7 +170,7 @@ xibuild () {
     # go back to root, make things easier
     cd $XI_ROOT
 
-    if [ -z "$(ls -A $PKG_DEST)" ]; then
+    if [ -z "$(ls -A $PKG_DEST)" ] && [ ! $SOURCE = "none" ]; then
         printf "$FAIL!!!Package is empty!!!$RESET\n"
         return 1;
     fi
@@ -163,6 +182,8 @@ xibuild () {
     # create info file
     printf "$INFO\tcreating xipkg.info...";
     PKG_INFO=$PKGS_OUTPUT/$PKG_NAME.xipkg.info
+
+    cp $BUILD_FILE $PKGS_OUTPUT/$PKG_NAME.xibuild
 
     echo "" > $PKG_INFO
     echo "NAME=$PKG_NAME" >> $PKG_INFO
@@ -190,6 +211,10 @@ xibuild () {
     printf "$PASS successfully built $PKG_NAME to $(basename $PKG_FILE)$RESET\n"
 
     clean
+
+    unset SOURCE DESC DEPS install package check
+
+
     echo "new $PKG_NAME $DESC" >> $REPORT_LOG
     return 0
 }
