@@ -53,8 +53,8 @@ xibuild () {
         rmdir $XI_ROOT/tmp > /dev/null 2>&1
     }
 
-    patch () {
-        echo "Passing missing patch stage"
+    prepare () {
+        echo "Passing missing prepare stage"
     }
     build () {
         printf "\tpassing missing build stage..."
@@ -144,8 +144,8 @@ xibuild () {
         SOURCE="none"
     fi
 
-    printf "\033[0;34m\tpatching package...\033[0m";
-    patch >> $LOGFILE 2>&1 && printf "$PASS patched\n" ||  return 1;
+    printf "\033[0;34m\tpreparing package...\033[0m";
+    prepare >> $LOGFILE 2>&1 && printf "$PASS prepared\n" ||  return 1;
 
     printf "$INFO\tbuilding package...";
     build >> $LOGFILE 2>&1 && printf "$PASS built\n" || return 1;
