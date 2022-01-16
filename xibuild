@@ -212,10 +212,9 @@ xibuild () {
 
     clean
 
-    unset SOURCE DESC DEPS install package check
-
-
     echo "new $PKG_NAME $DESC" >> $REPORT_LOG
+
+    unset SOURCE DESC DEPS install package check
     return 0
 }
 
