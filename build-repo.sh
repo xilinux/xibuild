@@ -15,13 +15,16 @@ build () {
     echo-head "repo" >> $REPOS_INDEX
     echo "<h1>repo</h1>" >> $REPOS_INDEX
 
-    for REPO in $(du -h buildfiles/repo/* | awk '{print $2}' | sort -r ); do
+    for REPO in $(du -h buildfiles/repo/* | awk '{print $2}' | sort -r | grep -i skip); do
         REPO_NAME=$(echo $REPO | cut -d"/" -f2-)
         REPO_DIR=$(realpath dist/$REPO_NAME)
 
         REPO_INDEX=$REPO_DIR/index.html
         REPO_LIST_OLD=$REPO_DIR/packages.txt
         REPO_LIST=$REPO_DIR/packages.list
+
+        echo "<a href='/$REPO_NAME'><h2>$REPO_NAME</h2><a> " >> $REPOS_INDEX
+
         mkdir -pv $REPO_DIR
         mkdir -pv $REPO_DIR/logs
         #mkdir -pv dist/$REPO_NAME/src
@@ -47,8 +50,6 @@ build () {
         generate-package-list
         add-additional 
         
-        echo "<a href='/$REPO_NAME'><h2>$REPO_NAME</h2><a> " >> $REPOS_INDEX
-
 
         echo "<p>package count: <strong>$(ls dist/$REPO_NAME/*.xipkg | wc -l)</strong></p>" >> $REPOS_INDEX
     done;
