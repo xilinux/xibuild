@@ -52,8 +52,6 @@ build () {
 
         echo "<p>package count: <strong>$(ls dist/$REPO_NAME/*.xipkg | wc -l)</strong></p>" >> $REPOS_INDEX
     done;
-
-    echo ""
 }
 
 echo-head () {
@@ -138,7 +136,7 @@ generate-package-list () {
 
 add-additional () {
     # move logs and sources
-    mkdir -pv dist/$REPO_NAME/logs
+    mkdir -p dist/$REPO_NAME/logs
     mv logs/* dist/$REPO_NAME/logs
     
     #mkdir -p dist/$REPO_NAME/src
@@ -146,7 +144,6 @@ add-additional () {
     
     # add key for whole repo
     mkdir dist/keychain
-    cp keychain/keys.list dist/keychain/
     cp keychain/*.pub dist/keychain/
 }
 
