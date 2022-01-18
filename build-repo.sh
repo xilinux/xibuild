@@ -15,7 +15,7 @@ build () {
     echo-head "repo" >> $REPOS_INDEX
     echo "<h1>repo</h1>" >> $REPOS_INDEX
 
-    for REPO in $(du -h buildfiles/repo/* | awk '{print $2}' | sort -r | grep -i skip); do
+    for REPO in $(du -h buildfiles/repo/* | awk '{print $2}' | sort -r | grep -v skip); do
         REPO_NAME=$(echo $REPO | cut -d"/" -f2-)
         REPO_DIR=$(realpath dist/$REPO_NAME)
 
