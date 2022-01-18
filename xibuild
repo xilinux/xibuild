@@ -160,7 +160,7 @@ xibuild () {
     if command -v postinstall > /dev/null; then
         POSTINSTALL=$(type postinstall | sed '1,3d;$d')
         if [ ${#POSTINSTALL} != 0 ]; then
-            POST_DIR=$PKG_DEST/tmp/xi/postinstall
+            POST_DIR=$PKG_DEST/var/lib/xipkg/postinstall
             mkdir -p $POST_DIR
             echo "#!/bin/sh" > $POST_DIR/$PKG_NAME.sh
             echo $POSTINSTALL >> $POST_DIR/$PKG_NAME.sh
