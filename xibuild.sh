@@ -9,6 +9,7 @@ textout=/dev/null
 src_dir="$(pwd)"
 out_dir="$(pwd)"
 
+key_file=""
 xibuild_dir="/var/lib/xibuild"
 build_dir="$xibuild_dir/build"
 export_dir="$xibuild_dir/build/xipkg"
@@ -32,6 +33,8 @@ ${BLUE}Avaiable Options:
         ${LIGHT_CYAN}specify the directory to build things in ${LIGHT_WHITE}[default: /var/lib/xibuild]
     ${BLUE}-p ${LIGHT_BLUE}[file]
         ${LIGHT_CYAN}specify a non-default xi_profile script, to run inside the chroot ${LIGHT_WHITE}[default: /usr/lib/xibuild/xi_profile.sh]
+    ${BLUE}-k ${LIGHT_BLUE}[file]
+        ${LIGHT_CYAN}specify an openssl private key to sign packages with${LIGHT_WHITE}[default: /usr/lib/xibuild/xi_profile.sh]
     
     ${BLUE}-v
         ${LIGHT_CYAN}verbose: print logs to stdout
@@ -117,7 +120,7 @@ xibuild_build () {
         $build_dir/xi_profile.sh $NAME $build_dir || return 1
     } || {
         xichroot "$root" "$build_dir/xi_profile.sh $NAME $build_dir" || return 1
-    }
+    } 2>&1
 }
 
 xibuild_strip () {
@@ -171,6 +174,19 @@ xibuild_describe () {
     done
 }
 
+xibuild_sign () {
+    [ -f "$key_file" ] && {
+        for xipkg in $(ls $out_dir/*.xipkg); do 
+            name=$(basename $xipkg .xipkg)
+            info_file=$xipkg.info 
+            {
+                printf "SIGNATURE="
+                openssl dgst -sign $key_file $xipkg | base64 | tr '\n' ' ':w
+                printf "\n"
+            } >> $info_file
+        done
+    }
+}
 
 while getopts ":r:c:p:b:d:vh" opt; do
     case "${opt}" in
@@ -182,6 +198,8 @@ while getopts ":r:c:p:b:d:vh" opt; do
             src_dir=$(realpath ${OPTARG});;
         b)
             build_dir=$(realpath ${OPTARG});;
+        k)
+            key_file=$(realpath ${OPTARG});;
         p)
             xibuild_profile=$(realpath ${OPTARG});;
         v)
@@ -193,7 +211,7 @@ done
 
 shift $((OPTIND-1))
 
-tasks="prepare fetch build strip package describe"
+tasks="prepare fetch build strip package describe sign"
 
 [ "$#" = "1" ] && {
     [ -d "$1" ] && {
