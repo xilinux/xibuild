@@ -1,5 +1,7 @@
 #!/bin/sh
 
+XIPKG_INFO_VERSION='04'
+
 [ -f /usr/lib/colors.sh ] && . /usr/lib/colors.sh
 [ -f /usr/lib/glyphs.sh ] && . /usr/lib/glyphs.sh
 
@@ -74,6 +76,7 @@ xibuild_prepare () {
     rm -rf $root/$build_dir
     rm -rf $root/$export_dir
     mkdir -p $root/$export_dir
+    echo > $logfile
     install -Dm755 $xibuild_profile $root/$build_dir/xi_profile.sh
 
 }
@@ -111,9 +114,9 @@ xibuild_fetch () {
 
 xibuild_build () {
     [ "$root" = "/" ] && {
-        $build_dir/xi_profile.sh $build_dir
+        $build_dir/xi_profile.sh $NAME $build_dir || return 1
     } || {
-        xichroot "$root" $builddir/xi_profile $builddir
+        xichroot "$root" "$build_dir/xi_profile.sh $NAME $build_dir" || return 1
     }
 }
 
@@ -132,7 +135,7 @@ xibuild_package () {
     for pkg in $(ls -1 $export_dir); do 
         cd $root/$export_dir/$pkg
         [ "$(ls -1 $root/$export_dir/$pkg| wc -l)" = "0" ] && {
-            echo "package $pkg is empty"
+            printf "${RED}package $pkg is empty\n"
             [ ! -z ${SOURCE} ] || exit 1
         }
         tar -C $root/$export_dir/$pkg -czf $out_dir/$pkg.xipkg ./
@@ -140,11 +143,36 @@ xibuild_package () {
 }
 
 xibuild_describe () {
+    for xipkg in $(ls $out_dir/*.xipkg); do 
+        name=$(basename $xipkg .xipkg)
+        buildfile="$src_dir/$name.xibuild"
+        info_file=$xipkg.info 
 
+        . $buildfile
+
+        local pkg_ver=$PKG_VER
+        [ -z "$pkg_ver" ] && pkg_ver=$BRANCH
+        [ -z "$pkg_ver" ] && pkg_ver="latest"
+
+        {
+            echo "# XiPKG info file version $XIPKG_INFO_VERSION"
+            echo "# automatically generated from the built packages"
+            echo "NAME=$name"
+            echo "DESCRIPTION=$DESC"
+            echo "PKG_FILE=$name.xipkg"
+            echo "CHECKSUM=$(md5sum $xipkg | awk '{ print $1 }')"
+            echo "VERSION=$pkg_ver"
+            echo "SOURCE=$SOURCE"
+            echo "DATE=$(stat -t $xipkg | cut -d' ' -f13 | xargs date -d)"
+            echo "DEPS=${DEPS}"
+            echo "MAKE_DEPS=${MAKE_DEPS}"
+            echo "ORIGIN=$NAME"
+        } > $info_file
+    done
 }
 
 
-while getopts ":r:c:p:b:d:qh" opt; do
+while getopts ":r:c:p:b:d:vh" opt; do
     case "${opt}" in
         r)
             root=$(realpath ${OPTARG});;
@@ -165,7 +193,7 @@ done
 
 shift $((OPTIND-1))
 
-tasks="prepare fetch build strip package"
+tasks="prepare fetch build strip package describe"
 
 [ "$#" = "1" ] && {
     [ -d "$1" ] && {
@@ -176,15 +204,23 @@ tasks="prepare fetch build strip package"
 }
 
 NAME=$(basename $(realpath "$src_dir"))
-trap "{printf \"${RED}${CROSS}\n\"}" 1
 
-. $src_dir/$NAME.xibuild
+[ -f "$src_dir/$NAME.xibuild" ] || {
+    printf "${RED} could not find $NAME.xibuild!\n"
+    exit 1
+}
 
-printf "${BLUE}${NAME}\n"
-for task in $tasks; do 
+build_package () {
+    . $src_dir/$NAME.xibuild
+
+    printf "${BLUE}${NAME}\n"
+    for task in $tasks; do 
     printf "${BLUE}${TABCHAR}$task " 
+    xibuild_$task >> $logfile > $textout && printf "${GREEN}${CHECKMARK}\n" || return 1
+    done
+}
 
-    xibuild_$task 2>&1 | tee -a $logfile > $textout || exit 1
-
-    printf "${GREEN}${CHECKMARK}\n"
-done
+build_package || {
+    printf "${RED}${CROSSMARK} Failed\n"
+    exit 1
+} 
