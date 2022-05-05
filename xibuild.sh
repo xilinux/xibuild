@@ -143,6 +143,7 @@ xibuild_package () {
         }
         tar -C $root/$export_dir/$pkg -czf $out_dir/$pkg.xipkg ./
     done
+    cp -r $src_dir/*.xibuild $out_dir/
 }
 
 xibuild_describe () {
