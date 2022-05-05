@@ -10,7 +10,6 @@ export MAKEFLAGS="-j$JOBS"
 export XORG_PREFIX="/usr"
 
 export XORG_CONFIG="--prefix=/usr --sysconfdir=/etc --localstatedir=/var --disable-static"
-export BUILD_ROOT="/build/source"
 export RUST_TARGET="x86_64-unknown-linux-musl"
 
 apply_patches () {
@@ -27,9 +26,9 @@ export BUILD_ROOT=$(realpath $2)
 builds="$(ls *.xibuild | grep -v "$PKG_NAME.xibuild")"
 
 for xibuild in $PKG_NAME.xibuild $(ls *.xibuild | grep -v "$PKG_NAME.xibuild"); do 
-        PKG_NAME=$(basename $xibuild .xibuild)
-        mkdir -p ./xipkg/$PKG_NAME
-        export PKG_DEST=$(realpath ./xipkg/$PKG_NAME)
+        SUBPKG_NAME=$(basename $xibuild .xibuild)
+        mkdir -p ./xipkg/$SUBPKG_NAME
+        export PKG_DEST=$(realpath ./xipkg/$SUBPKG_NAME)
         echo "to install to $PKG_DEST"
 
         echo "============$PKG_NAME============="
