@@ -14,7 +14,6 @@ xibuild_dir="/var/lib/xibuild"
 build_dir="$xibuild_dir/build"
 export_dir="$xibuild_dir/build/xipkg"
 
-logfile="$xibuild_dir/build.log"
 root="/"
 
 xibuild_profile="/usr/lib/xibuild/xi_profile.sh"
@@ -58,64 +57,57 @@ EOF
 }
 
 extract () {
-    FILE=$1
-    case "${FILE##*.}" in 
-        "gz" )
-            tar -zxf $FILE
-            ;;
-        "lz" )
-            tar --lzip -xf "$FILE"
-            ;;
-        "zip" )
-            unzip -qq -o $FILE 
-            ;;
-        * )
-            tar -xf $FILE
-            ;;
+    f=$1
+    case "${f##*.}" in 
+        "gz" ) tar -zxf $f;;
+        "lz" ) tar --lzip -xf "$f" ;;
+        "zip" ) unzip -qq -o $f ;;
+        * ) tar -xf $f ;;
     esac
 }
 
 xibuild_prepare () {
-    rm -rf $root/$build_dir
-    rm -rf $root/$export_dir
-    mkdir -p $root/$export_dir
+    rm -rf $root/$build_dir $root/$export_dir
+    mkdir -p $root/$build_dir
     echo > $logfile
-    install -Dm755 $xibuild_profile $root/$build_dir/xi_profile.sh
+}
 
+# fetch and extract a source folder
+#   fetch_source [source_url] (branch)
+#
+fetch_source () {
+    git ls-remote -q $@ >/dev/null 2>&1 && {
+        git clone $1 .
+        git checkout $2 
+    } 2>&1 || {
+        local downloaded=$(basename $1)
+
+        curl -SsL $1 > $downloaded
+        extract $downloaded
+
+        [ "$(ls -1 | wc -l)" = "2" ] &&
+            for file in */* */.*; do 
+                echo $file | grep -q '\.$' || mv $file .
+            done;
+        
+    }
 }
 
 xibuild_fetch () {
     cd $root/$build_dir
-    [ ! -z "$SOURCE" ] && {
-        git ls-remote -q $SOURCE $BRANCH >/dev/null 2>&1 && {
-            git clone $SOURCE . >/dev/null 2>&1
-            git checkout $BRANCH >/dev/null 2>&1
-        } || {
-            local downloaded=$(basename $SOURCE)
-            curl -SsL $SOURCE > $downloaded
-            extract $downloaded
-
-            [ "$(ls -1 | wc -l)" = "2" ] && {
-                for file in */* */.*; do 
-                    echo $file | grep -q '\.$' || mv $file .
-                done;
-            }
-        }
-    }
-    
-    [ ! -z "$ADDITIONAL" ] && {
-        for url in "$ADDITIONAL"; do 
-            case $url in 
-                http*|ftp*)
-                    curl -SsL $url> $root/$build_dir/$(basename $url);;
-            esac
-        done
-    }
-
+    [ ! -z "$SOURCE" ] && fetch_source $SOURCE $BRANCH
+    [ ! -z "$ADDITIONAL" ] && for url in "$ADDITIONAL"; do 
+        case $url in 
+            http*|ftp*) curl -SsL $url> $root/$build_dir/$(basename $url);;
+        esac
+    done
     cp -r $src_dir/* $root/$build_dir/
 }
 
 xibuild_build () {
+    install -Dm755 $xibuild_profile $root/$build_dir/xi_profile.sh
+    mkdir -p $root/$export_dir
+
     [ "$root" = "/" ] && {
         $build_dir/xi_profile.sh $NAME $build_dir || return 1
     } || {
@@ -125,23 +117,29 @@ xibuild_build () {
 
 xibuild_strip () {
    for file in \
-       $(find $export_dir/ -type f -name \*.so* ! -name \*dbg) \
-       $(find $export_dir/ -type f -name \*.a) \
-       $(find $export_dir/ -type f -executable ); do
+       $(find $root/$export_dir/ -type f -name \*.so* ! -name \*dbg) \
+       $(find $root/$export_dir/ -type f -name \*.a) \
+       $(find $root/$export_dir/ -type f -executable ); do
        strip --strip-unneeded $file
    done
 
-   find $export_dir -name \*.la -delete
+   find $root/$export_dir -name \*.la -delete
 }
 
 xibuild_package () {
-    for pkg in $(ls -1 $export_dir); do 
+    pkgs="$(ls -1 $root/$export_dir)"
+    [ "${#pkgs}" = 0 ] && 
+        printf "${LIGHT_RED}No packages built?" &&
+        return 1
+
+    for pkg in $pkgs; do 
         cd $root/$export_dir/$pkg
-        [ "$(ls -1 $root/$export_dir/$pkg| wc -l)" = "0" ] && {
-            printf "${RED}package $pkg is empty\n"
-            [ ! -z ${SOURCE} ] || exit 1
+        [ "$(ls -1 $root/$export_dir/$pkg | wc -l)" = "0" ] && {
+            printf "package $pkg is empty\n"
+            [ ! -z ${SOURCE}] && return 1
+        } || {
+            tar -C $root/$export_dir/$pkg -czf $out_dir/$pkg.xipkg ./
         }
-        tar -C $root/$export_dir/$pkg -czf $out_dir/$pkg.xipkg ./
     done
     cp -r $src_dir/*.xibuild $out_dir/
 }
@@ -189,7 +187,7 @@ xibuild_sign () {
     }
 }
 
-while getopts ":r:c:p:b:d:vh" opt; do
+while getopts ":r:c:k:p:b:d:vh" opt; do
     case "${opt}" in
         r)
             root=$(realpath ${OPTARG});;
@@ -222,10 +220,11 @@ tasks="prepare fetch build strip package describe sign"
     }
 }
 
+logfile="$out_dir/build.log"
 NAME=$(basename $(realpath "$src_dir"))
 
 [ -f "$src_dir/$NAME.xibuild" ] || {
-    printf "${RED} could not find $NAME.xibuild!\n"
+    printf "${RED}could not find $NAME.xibuild!\n"
     exit 1
 }
 
@@ -235,7 +234,7 @@ build_package () {
     printf "${BLUE}${NAME}\n"
     for task in $tasks; do 
     printf "${BLUE}${TABCHAR}$task " 
-    xibuild_$task >> $logfile > $textout && printf "${GREEN}${CHECKMARK}\n" || return 1
+    xibuild_$task >> $logfile && printf "${GREEN}${CHECKMARK}\n" || return 1
     done
 }
 

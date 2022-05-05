@@ -28,8 +28,9 @@ builds="$(ls *.xibuild | grep -v "$PKG_NAME.xibuild")"
 
 for xibuild in $PKG_NAME.xibuild $(ls *.xibuild | grep -v "$PKG_NAME.xibuild"); do 
         PKG_NAME=$(basename $xibuild .xibuild)
-        export PKG_DEST=./xipkg/$PKG_NAME
-        mkdir -p $PKG_DEST
+        mkdir -p ./xipkg/$PKG_NAME
+        export PKG_DEST=$(realpath ./xipkg/$PKG_NAME)
+        echo "to install to $PKG_DEST"
 
         echo "============$PKG_NAME============="
 
