@@ -120,10 +120,10 @@ xibuild_strip () {
        $(find $root/$export_dir/ -type f -name \*.so* ! -name \*dbg) \
        $(find $root/$export_dir/ -type f -name \*.a) \
        $(find $root/$export_dir/ -type f -executable ); do
-       strip --strip-unneeded $file
+       strip --strip-unneeded $file 2>&1
    done
 
-   find $root/$export_dir -name \*.la -delete
+   find $root/$export_dir -name \*.la -delete 2>&1
 }
 
 xibuild_package () {
@@ -162,7 +162,7 @@ xibuild_describe () {
             echo "NAME=$name"
             echo "DESCRIPTION=$DESC"
             echo "PKG_FILE=$name.xipkg"
-            echo "CHECKSUM=$(md5sum $xipkg | awk '{ print $1 }')"
+            echo "CHECKSUM=$(sha512sum $xipkg | awk '{ print $1 }')"
             echo "VERSION=$pkg_ver"
             echo "SOURCE=$SOURCE"
             echo "DATE=$(stat -t $xipkg | cut -d' ' -f13 | xargs date -d)"
