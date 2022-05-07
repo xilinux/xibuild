@@ -3,6 +3,10 @@
 export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin:/tools/sbin
 export LIBRARY_PATH=/lib:/usr/lib/:/tools/lib:/tools/lib64
 
+export CC="clang"
+export CXX="clang++"
+export LD="clang"
+
 export JOBS=$(grep "processor" /proc/cpuinfo | wc -l)
 export HOME=/root
 
@@ -55,8 +59,8 @@ for xibuild in $PKG_NAME.xibuild $(ls *.xibuild | grep -v "$PKG_NAME.xibuild"); 
             echo "adding postinstall"
             POST_DIR=$PKG_DEST/var/lib/xipkg/postinstall
             mkdir -p $POST_DIR
-            cat /build/$PKG_NAME.xibuild > $POST_DIR/$PKG_NAME.sh
-            echo "" >> $POST_DIR/$PKG_NAME.sh
+            cat ./$PKG_NAME.xibuild > $POST_DIR/$PKG_NAME.sh
+            echo >> $POST_DIR/$PKG_NAME.sh
             echo "postinstall" >> $POST_DIR/$PKG_NAME.sh
         else
             echo "no postinstall"
