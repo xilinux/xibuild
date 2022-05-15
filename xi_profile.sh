@@ -23,19 +23,35 @@ apply_patches () {
     done
 }
 
+add_from_main () {
+    for pattern in $@; do 
+        printf "moving $pattern..."
+        for file in $(find ./xipkg/ -path "./xipkg/*/$pattern" );  do
+            printf "$file "
+            filename=${file#./xipkg/$PKG_NAME}
+            mkdir -p $PKG_DEST/${pattern%/*}
+            mv $file $PKG_DEST/${filename}
+        done
+        printf "\n"
+    done
+}
+
 PKG_NAME=$1
 cd $2
 export BUILD_ROOT=$(realpath $2)
 
+echo "Build file for $1, to build at root $2"
+
 builds="$(ls *.xibuild | grep -v "$PKG_NAME.xibuild")"
 
 for xibuild in $PKG_NAME.xibuild $(ls *.xibuild | grep -v "$PKG_NAME.xibuild"); do 
+        cd $2
         SUBPKG_NAME=$(basename $xibuild .xibuild)
         mkdir -p ./xipkg/$SUBPKG_NAME
         export PKG_DEST=$(realpath ./xipkg/$SUBPKG_NAME)
         echo "to install to $PKG_DEST"
 
-        echo "============$PKG_NAME============="
+        echo "============$SUBPKG_NAME============="
 
         #  read only the static variables fromt the primary
         . ./$PKG_NAME.xibuild

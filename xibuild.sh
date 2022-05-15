@@ -9,7 +9,6 @@ textout=/dev/null
 src_dir="$(pwd)"
 out_dir="$(pwd)"
 
-key_file=""
 xibuild_dir="/var/lib/xibuild"
 build_dir="$xibuild_dir/build"
 export_dir="$xibuild_dir/build/xipkg"
@@ -96,9 +95,9 @@ fetch_source () {
 xibuild_fetch () {
     cd $root/$build_dir
     [ ! -z "$SOURCE" ] && fetch_source $SOURCE $BRANCH
-    [ ! -z "$ADDITIONAL" ] && for url in "$ADDITIONAL"; do 
+    for url in $ADDITIONAL; do 
         case $url in 
-            http*|ftp*) curl -SsL $url> $root/$build_dir/$(basename $url);;
+            http*|ftp*) fetch_source $url;;
         esac
     done
     cp -r $src_dir/* $root/$build_dir/
@@ -109,7 +108,7 @@ xibuild_build () {
     mkdir -p $root/$export_dir
 
     [ "$root" = "/" ] && {
-        $build_dir/xi_profile.sh $NAME $build_dir || return 1
+        sh $build_dir/xi_profile.sh $NAME $build_dir || return 1
     } || {
         xichroot "$root" "$build_dir/xi_profile.sh $NAME $build_dir" || return 1
     } 2>&1
@@ -136,12 +135,14 @@ xibuild_package () {
         cd $root/$export_dir/$pkg
         [ "$(ls -1 $root/$export_dir/$pkg | wc -l)" = "0" ] && {
             printf "package $pkg is empty\n"
-            [ ! -z ${SOURCE}] && return 1
+            [ ! -z ${SOURCE} ] && return 1
         } || {
-            tar -C $root/$export_dir/$pkg -czf $out_dir/$pkg.xipkg ./
+            tar -C $root/$export_dir/$pkg -cJf $out_dir/$pkg.xipkg ./
         }
     done
-    cp -r $src_dir/*.xibuild $out_dir/
+    for buildfile in $(find $src_dir -name "$src_dir/*.xibuild"); do
+        cp $buildfile $out_dir/
+    done
 }
 
 xibuild_describe () {
@@ -210,7 +211,9 @@ done
 
 shift $((OPTIND-1))
 
-tasks="prepare fetch build strip package describe sign"
+tasks="prepare fetch build strip package describe"
+
+[ "$key_file" ] && tasks="$tasks sign"
 
 [ "$#" = "1" ] && {
     [ -d "$1" ] && {
@@ -224,7 +227,7 @@ logfile="$out_dir/build.log"
 NAME=$(basename $(realpath "$src_dir"))
 
 [ -f "$src_dir/$NAME.xibuild" ] || {
-    printf "${RED}could not find $NAME.xibuild!\n"
+    printf "${RED}could not find $src_dir/$NAME.xibuild!\n"
     exit 1
 }
 
@@ -233,8 +236,8 @@ build_package () {
 
     printf "${BLUE}${NAME}\n"
     for task in $tasks; do 
-    printf "${BLUE}${TABCHAR}$task " 
-    xibuild_$task >> $logfile && printf "${GREEN}${CHECKMARK}\n" || return 1
+        printf "${BLUE}${TABCHAR}$task " 
+        xibuild_$task >> $logfile && printf "${GREEN}${CHECKMARK}\n" || return 1
     done
 }
 
