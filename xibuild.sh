@@ -13,6 +13,10 @@ xibuild_dir="/var/lib/xibuild"
 build_dir="$xibuild_dir/build"
 export_dir="$xibuild_dir/build/xipkg"
 
+doinstall=false
+doclean=false
+checkopt=""
+
 root="/"
 
 xibuild_profile="/usr/lib/xibuild/xi_profile.sh"
@@ -25,7 +29,7 @@ ${BLUE}Avaiable Options:
         ${LIGHT_CYAN}specify the chroot to use when building packages${LIGHT_WHITE}[default: /]
     ${BLUE}-d ${LIGHT_BLUE}[path]
         ${LIGHT_CYAN}specify the output directory to put xipkg files ${LIGHT_WHITE}[default: ./]
-    ${BLUE}-c ${LIGHT_BLUE}[path]
+    ${BLUE}-C ${LIGHT_BLUE}[path]
         ${LIGHT_CYAN}specify the directory to find xibuild files${LIGHT_WHITE}[default: ./]
     ${BLUE}-b ${LIGHT_BLUE}[path]
         ${LIGHT_CYAN}specify the directory to build things in ${LIGHT_WHITE}[default: /var/lib/xibuild]
@@ -36,6 +40,12 @@ ${BLUE}Avaiable Options:
     
     ${BLUE}-v
         ${LIGHT_CYAN}verbose: print logs to stdout
+    ${BLUE}-i
+        ${LIGHT_CYAN}install: install the built package using xipkg
+    ${BLUE}-c
+        ${LIGHT_CYAN}clean: clean the out directory after building and installing
+    ${BLUE}-n
+        ${LIGHT_CYAN}nocheck: skip running the step stage of building
     
 ${BLUE}Available Commands:
     ${LIGHT_GREEN}prepare
@@ -108,9 +118,9 @@ xibuild_build () {
     mkdir -p $root/$export_dir
 
     [ "$root" = "/" ] && {
-        sh $build_dir/xi_profile.sh $NAME $build_dir || return 1
+        sh $build_dir/xi_profile.sh $NAME $build_dir $checkopt || return 1
     } || {
-        xichroot "$root" "$build_dir/xi_profile.sh $NAME $build_dir" || return 1
+        xichroot "$root" "$build_dir/xi_profile.sh $NAME $build_dir $checkopt" || return 1
     } 2>&1
 }
 
@@ -188,13 +198,27 @@ xibuild_sign () {
     }
 }
 
-while getopts ":r:c:k:p:b:d:vh" opt; do
+xipkg_install () {
+    for xipkg in $(ls $out_dir/*.xipkg); do 
+        xipkg -nyl -r $root install $xipkg
+    done
+}
+
+clean () {
+    for xipkg in $(ls $out_dir/*.xipkg*); do 
+        rm $xipkg
+    done
+    rm $out_dir/build.log
+}
+
+
+while getopts ":r:C:k:p:b:d:vcinh" opt; do
     case "${opt}" in
         r)
             root=$(realpath ${OPTARG});;
         d)
             out_dir=$(realpath ${OPTARG});;
-        c)
+        C)
             src_dir=$(realpath ${OPTARG});;
         b)
             build_dir=$(realpath ${OPTARG});;
@@ -204,6 +228,12 @@ while getopts ":r:c:k:p:b:d:vh" opt; do
             xibuild_profile=$(realpath ${OPTARG});;
         v)
             textout=/dev/stdout;;
+        i)
+            doinstall=true;;
+        c)
+            doclean=true;;
+        n)
+            checkopt="-n";;
         h)
             usage; exit 0;;
     esac
@@ -214,6 +244,9 @@ shift $((OPTIND-1))
 tasks="prepare fetch build strip package describe"
 
 [ "$key_file" ] && tasks="$tasks sign"
+
+$doinstall && tasks="$tasks xipkg_install"
+$doclean && tasks="$tasks clean"
 
 [ "$#" = "1" ] && {
     [ -d "$1" ] && {

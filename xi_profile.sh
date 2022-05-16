@@ -38,6 +38,13 @@ add_from_main () {
 
 PKG_NAME=$1
 cd $2
+
+stages="prepare build check package"
+case "$@" in
+    *"-n"*)
+        stages="prepare build package"
+esac
+
 export BUILD_ROOT=$(realpath $2)
 
 echo "Build file for $1, to build at root $2"
@@ -63,7 +70,7 @@ for xibuild in $PKG_NAME.xibuild $(ls *.xibuild | grep -v "$PKG_NAME.xibuild"); 
         . ./$xibuild
 
         
-        for t in prepare build check package; do
+        for t in $stages; do
             type $t >/dev/null && {
                 echo "==========================$t stage=========================="
                 $t || exit 1
