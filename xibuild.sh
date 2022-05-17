@@ -19,7 +19,7 @@ checkopt=""
 
 root="/"
 
-xibuild_profile="/usr/lib/xibuild/xi_profile.sh"
+xibuild_profile="/etc/xibuild_profile.conf"
 xibuild_script="/usr/lib/xibuild/xi_buildscript.sh"
 
 usage () {
@@ -35,9 +35,9 @@ ${BLUE}Avaiable Options:
     ${BLUE}-b ${LIGHT_BLUE}[path]
         ${LIGHT_CYAN}specify the directory to build things in ${LIGHT_WHITE}[default: /var/lib/xibuild]
     ${BLUE}-p ${LIGHT_BLUE}[file]
-        ${LIGHT_CYAN}specify a non-default xi_profile script, to run inside the chroot ${LIGHT_WHITE}[default: /usr/lib/xibuild/xi_profile.sh]
+        ${LIGHT_CYAN}specify a non-default xi_profile script, to run inside the chroot ${LIGHT_WHITE}[default: /etc/xibuild_profile.conf]
     ${BLUE}-k ${LIGHT_BLUE}[file]
-        ${LIGHT_CYAN}specify an openssl private key to sign packages with${LIGHT_WHITE}[default: /usr/lib/xibuild/xi_profile.sh]
+        ${LIGHT_CYAN}specify an openssl private key to sign packages with${LIGHT_WHITE}
     
     ${BLUE}-v
         ${LIGHT_CYAN}verbose: print logs to stdout
@@ -115,6 +115,7 @@ xibuild_fetch () {
 }
 
 xibuild_build () {
+    install -d $root/$build_dir/
     install -Dm755 $xibuild_profile $root/$build_dir/xi_profile.sh
     install -Dm755 $xibuild_script $root/$build_dir/xi_buildscript.sh
     mkdir -p $root/$export_dir

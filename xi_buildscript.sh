@@ -1,5 +1,8 @@
 #!/bin/sh
 
+PKG_NAME=$1
+cd $2
+
 . ./xi_profile.sh
 
 apply_patches () {
@@ -21,9 +24,6 @@ add_from_main () {
         printf "\n"
     done
 }
-
-PKG_NAME=$1
-cd $2
 
 stages="prepare build check package"
 case "$@" in
