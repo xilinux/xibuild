@@ -201,19 +201,18 @@ xibuild_sign () {
     }
 }
 
-xipkg_install () {
+xibuild_install () {
     for xipkg in $(ls $out_dir/*.xipkg); do 
         xipkg -nyl -r $root install $xipkg
     done
 }
 
-clean () {
+xibuild_clean () {
     for xipkg in $(ls $out_dir/*.xipkg*); do 
         rm $xipkg
     done
     rm $out_dir/build.log
 }
-
 
 while getopts ":r:C:k:p:b:d:vcinh" opt; do
     case "${opt}" in
@@ -248,7 +247,7 @@ tasks="prepare fetch build strip package describe"
 
 [ "$key_file" ] && tasks="$tasks sign"
 
-$doinstall && tasks="$tasks xipkg_install"
+$doinstall && tasks="$tasks install"
 $doclean && tasks="$tasks clean"
 
 [ "$#" = "1" ] && {
