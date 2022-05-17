@@ -20,6 +20,7 @@ checkopt=""
 root="/"
 
 xibuild_profile="/usr/lib/xibuild/xi_profile.sh"
+xibuild_script="/usr/lib/xibuild/xi_buildscript.sh"
 
 usage () {
     cat << EOF
@@ -115,12 +116,13 @@ xibuild_fetch () {
 
 xibuild_build () {
     install -Dm755 $xibuild_profile $root/$build_dir/xi_profile.sh
+    install -Dm755 $xibuild_script $root/$build_dir/xi_buildscript.sh
     mkdir -p $root/$export_dir
 
     [ "$root" = "/" ] && {
-        sh $build_dir/xi_profile.sh $NAME $build_dir $checkopt || return 1
+        sh $build_dir/xi_buildscript.sh $NAME $build_dir $checkopt || return 1
     } || {
-        xichroot "$root" "$build_dir/xi_profile.sh $NAME $build_dir $checkopt" || return 1
+        xichroot "$root" "$build_dir/xi_buildscript.sh $NAME $build_dir $checkopt" || return 1
     } 2>&1
 }
 
