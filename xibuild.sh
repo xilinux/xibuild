@@ -121,10 +121,10 @@ xibuild_build () {
     mkdir -p $root/$export_dir
 
     [ "$root" = "/" ] && {
-        sh $build_dir/xi_buildscript.sh $NAME $build_dir $checkopt || return 1
+        sh $build_dir/xi_buildscript.sh $NAME $build_dir $checkopt 2>&1 || return 1
     } || {
-        xichroot "$root" "$build_dir/xi_buildscript.sh $NAME $build_dir $checkopt" || return 1
-    } 2>&1
+        xichroot "$root" "$build_dir/xi_buildscript.sh $NAME $build_dir $checkopt" 2>&1 || return 1
+    } 
 }
 
 xibuild_strip () {
@@ -279,4 +279,4 @@ build_package () {
 build_package || {
     printf "${RED}${CROSSMARK} Failed\n"
     exit 1
-} 
+}

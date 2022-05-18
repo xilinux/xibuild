@@ -1,6 +1,6 @@
-export CC="clang"
-export CXX="clang++"
-export LD="clang"
+#export CC="clang"
+#export CXX="clang++"
+#export LD="clang"
 
 export JOBS=$(grep "processor" /proc/cpuinfo | wc -l)
 export MAKEFLAGS=-j$JOBS
