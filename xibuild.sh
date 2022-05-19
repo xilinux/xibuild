@@ -28,6 +28,8 @@ ${LIGHT_RED}Usage: ${RED}xibuild [path/command]
 ${BLUE}Avaiable Options:
     ${BLUE}-r ${LIGHT_BLUE}[path]
         ${LIGHT_CYAN}specify the chroot to use when building packages${LIGHT_WHITE}[default: /]
+    ${BLUE}-l ${LIGHT_BLUE}[path]
+        ${LIGHT_CYAN}specify the file to use for logs${LIGHT_WHITE}[default: \$output/build.log]
     ${BLUE}-d ${LIGHT_BLUE}[path]
         ${LIGHT_CYAN}specify the output directory to put xipkg files ${LIGHT_WHITE}[default: ./]
     ${BLUE}-C ${LIGHT_BLUE}[path]
@@ -214,12 +216,14 @@ xibuild_clean () {
     rm $out_dir/build.log
 }
 
-while getopts ":r:C:k:p:b:d:vcinh" opt; do
+while getopts ":r:l:C:k:p:b:d:vcinh" opt; do
     case "${opt}" in
         r)
             root=$(realpath ${OPTARG});;
         d)
             out_dir=$(realpath ${OPTARG});;
+        l)
+            logfile=$(realpath ${OPTARG});;
         C)
             src_dir=$(realpath ${OPTARG});;
         b)
@@ -258,7 +262,8 @@ $doclean && tasks="$tasks clean"
     }
 }
 
-logfile="$out_dir/build.log"
+[ -f "$logfile" ] && logfile="$out_dir/build.log"
+
 NAME=$(basename $(realpath "$src_dir"))
 
 [ -f "$src_dir/$NAME.xibuild" ] || {
