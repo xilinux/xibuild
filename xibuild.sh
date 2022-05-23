@@ -262,7 +262,8 @@ $doclean && tasks="$tasks clean"
     }
 }
 
-[ -f "$logfile" ] && logfile="$out_dir/build.log"
+[ "${#logfile}" = "0" ] && logfile="$out_dir/build.log"
+[ -d "${logfile%/*}" ] || mkdir -p "${logfile%/*}"
 
 NAME=$(basename $(realpath "$src_dir"))
 
