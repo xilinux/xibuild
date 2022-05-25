@@ -70,11 +70,16 @@ EOF
 
 extract () {
     f=$1
-    case "${f##*.}" in 
-        "gz" ) tar -zxf $f;;
-        "lz" ) tar --lzip -xf "$f" ;;
-        "zip" ) unzip -qq -o $f ;;
-        * ) tar -xf $f ;;
+    case "${f}" in 
+        *".tar"*) 
+            case "${f##*.}" in 
+            "gz" ) tar -zxf $f;;
+            "lz" ) tar --lzip -xf "$f" ;;
+            * ) tar -xf $f ;;
+        esac
+        ;;
+        *".tgz" ) tar -xf $f ;;
+        *".zip" ) unzip -qq -o $f ;;
     esac
 }
 
@@ -97,23 +102,25 @@ fetch_source () {
         curl -SsL $1 > $downloaded
         extract $downloaded
 
-        [ "$(ls -1 | wc -l)" = "2" ] &&
-            for file in */* */.*; do 
-                echo $file | grep -q '\.$' || mv $file .
-            done;
-        
     }
 }
 
 xibuild_fetch () {
     cd $root/$build_dir
     [ ! -z "$SOURCE" ] && fetch_source $SOURCE $BRANCH
+
+    [ "$(ls -1 | wc -l)" = "2" ] &&
+        for file in */* */.*; do 
+            echo $file | grep -q '\.$' || mv $file .
+        done;
+        
     for url in $ADDITIONAL; do 
         case $url in 
             http*|ftp*) fetch_source $url;;
+            *) fetch_source file://$src_dir/$url
         esac
     done
-    cp -r $src_dir/* $root/$build_dir/
+    cp -r $src_dir/*.xibuild $root/$build_dir/
 }
 
 xibuild_build () {
