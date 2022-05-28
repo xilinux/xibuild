@@ -157,7 +157,7 @@ xibuild_package () {
             tar -C $root/$export_dir/$pkg -cJf $out_dir/$pkg.xipkg ./
         }
     done
-    for buildfile in $(find $src_dir -name "$src_dir/*.xibuild"); do
+    for buildfile in $(find $src_dir -name "*.xibuild"); do
         cp $buildfile $out_dir/
     done
 }

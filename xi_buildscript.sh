@@ -55,6 +55,16 @@ for xibuild in $PKG_NAME.xibuild $(ls *.xibuild | grep -v "^$PKG_NAME.xibuild$")
 
         . ./$xibuild
 
+        printf "checking for postinstall... "
+        if command -v postinstall > /dev/null; then 
+            echo "adding postinstall"
+            POST_DIR=$PKG_DEST/var/lib/xipkg/postinstall
+            mkdir -p $POST_DIR
+            cat ./$PKG_NAME.xibuild $xibuild >> $POST_DIR/$PKG_NAME.sh
+            echo "postinstall" >> $POST_DIR/$PKG_NAME.sh
+        else
+            echo "no postinstall"
+        fi
         
         for t in $stages; do
             type $t >/dev/null && {
@@ -63,15 +73,4 @@ for xibuild in $PKG_NAME.xibuild $(ls *.xibuild | grep -v "^$PKG_NAME.xibuild$")
             }
         done
 
-        printf "checking for postinstall... "
-        if command -v postinstall > /dev/null; then 
-            echo "adding postinstall"
-            POST_DIR=$PKG_DEST/var/lib/xipkg/postinstall
-            mkdir -p $POST_DIR
-            cat ./$PKG_NAME.xibuild > $POST_DIR/$PKG_NAME.sh
-            echo >> $POST_DIR/$PKG_NAME.sh
-            echo "postinstall" >> $POST_DIR/$PKG_NAME.sh
-        else
-            echo "no postinstall"
-        fi
 done
