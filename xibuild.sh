@@ -1,6 +1,6 @@
 #!/bin/sh
 
-XIPKG_INFO_VERSION='04'
+XIPKG_INFO_VERSION='05'
 
 [ -f /usr/lib/colors.sh ] && . /usr/lib/colors.sh
 [ -f /usr/lib/glyphs.sh ] && . /usr/lib/glyphs.sh
