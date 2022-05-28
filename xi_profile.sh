@@ -7,7 +7,7 @@ export MAKEFLAGS=-j$JOBS
 export SAMUFLAGS=-j$JOBS
 export CARGO_BUILD_JOBS=$JOBS
 
-export CFLAGS="-Os -fomit-frame-pointer"
+export CFLAGS="-pipe -Os -fomit-frame-pointer"
 export CXXFLAGS="$CFLAGS"
 export CPPFLAGS="$CFLAGS"
 export LDFLAGS="-Wl,--as-needed,-O1,--sort-common"

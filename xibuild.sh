@@ -70,16 +70,11 @@ EOF
 
 extract () {
     f=$1
-    case "${f}" in 
-        *".tar"*) 
-            case "${f##*.}" in 
-            "gz" ) tar -zxf $f;;
-            "lz" ) tar --lzip -xf "$f" ;;
-            * ) tar -xf $f ;;
-        esac
-        ;;
-        *".tgz" ) tar -xf $f ;;
-        *".zip" ) unzip -qq -o $f ;;
+    case "$(file $f)" in 
+        *"gzip"*) tar -zxf $f;;
+        *"XZ"*) tar -Jxf $f;;
+        *"bzip2"*) tar -jxf $f;;
+        *"Zip"*) unzip -qq -o $f ;;
     esac
 }
 
@@ -116,7 +111,7 @@ xibuild_fetch () {
         
     for url in $ADDITIONAL; do 
         case $url in 
-            http*|ftp*) fetch_source $url;;
+            *'://'*) fetch_source $url;;
             *) fetch_source file://$src_dir/$url
         esac
     done
@@ -187,6 +182,7 @@ xibuild_describe () {
             echo "PKG_FILE=$name.xipkg"
             echo "CHECKSUM=$(sha512sum $xipkg | awk '{ print $1 }')"
             echo "VERSION=$pkg_ver"
+            echo "REVISION=$(cat ${buildfile%/*}/*.xibuild | sha512sum | cut -d' ' -f1)"
             echo "SOURCE=$SOURCE"
             echo "DATE=$(stat -t $xipkg | cut -d' ' -f13 | xargs date -d)"
             echo "DEPS=${DEPS}"
