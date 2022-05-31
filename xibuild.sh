@@ -31,7 +31,7 @@ ${BLUE}Avaiable Options:
         ${LIGHT_CYAN}specify the chroot to use when building packages${LIGHT_WHITE}[default: /]
     ${BLUE}-l ${LIGHT_BLUE}[path]
         ${LIGHT_CYAN}specify the file to use for logs${LIGHT_WHITE}[default: \$output/build.log]
-    ${BLUE}-d ${LIGHT_BLUE}[path]
+    ${BLUE}-o ${LIGHT_BLUE}[path]
         ${LIGHT_CYAN}specify the output directory to put xipkg files ${LIGHT_WHITE}[default: ./]
     ${BLUE}-C ${LIGHT_BLUE}[path]
         ${LIGHT_CYAN}specify the directory to find xibuild files${LIGHT_WHITE}[default: ./]
@@ -222,11 +222,11 @@ xibuild_clean () {
     rm $out_dir/build.log
 }
 
-while getopts ":r:l:C:k:p:b:d:vcinsh" opt; do
+while getopts ":r:l:C:k:p:b:o:vcinsh" opt; do
     case "${opt}" in
         r)
             root=$(realpath ${OPTARG});;
-        d)
+        o)
             out_dir=$(realpath ${OPTARG});;
         l)
             logfile=$(realpath ${OPTARG});;
