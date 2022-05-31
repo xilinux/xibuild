@@ -14,6 +14,7 @@ build_dir="$xibuild_dir/build"
 export_dir="$xibuild_dir/build/xipkg"
 
 doinstall=false
+dostrip=true
 doclean=false
 checkopt=""
 
@@ -49,6 +50,8 @@ ${BLUE}Avaiable Options:
         ${LIGHT_CYAN}clean: clean the out directory after building and installing
     ${BLUE}-n
         ${LIGHT_CYAN}nocheck: skip running the step stage of building
+    ${BLUE}-s
+        ${LIGHT_CYAN}nostrip: do not strip debugging symbols from binary
     
 ${BLUE}Available Commands:
     ${LIGHT_GREEN}prepare
@@ -199,7 +202,7 @@ xibuild_sign () {
             info_file=$xipkg.info 
             {
                 printf "SIGNATURE="
-                openssl dgst -sign $key_file $xipkg | base64 | tr '\n' ' ':w
+                openssl dgst -sign $key_file $xipkg | base64 | tr '\n' ' '
                 printf "\n"
             } >> $info_file
         done
@@ -219,7 +222,7 @@ xibuild_clean () {
     rm $out_dir/build.log
 }
 
-while getopts ":r:l:C:k:p:b:d:vcinh" opt; do
+while getopts ":r:l:C:k:p:b:d:vcinsh" opt; do
     case "${opt}" in
         r)
             root=$(realpath ${OPTARG});;
@@ -243,6 +246,8 @@ while getopts ":r:l:C:k:p:b:d:vcinh" opt; do
             doclean=true;;
         n)
             checkopt="-n";;
+        s)
+            dostrip=false;;
         h)
             usage; exit 0;;
     esac
@@ -250,7 +255,10 @@ done
 
 shift $((OPTIND-1))
 
-tasks="prepare fetch build strip package describe"
+
+tasks="prepare fetch build"
+$dostrip && tasks="$tasks strip"
+tasks="$tasks package describe"
 
 [ "$key_file" ] && tasks="$tasks sign"
 

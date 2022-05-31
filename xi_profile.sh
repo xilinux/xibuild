@@ -1,13 +1,13 @@
-#export CC="clang"
-#export CXX="clang++"
-#export LD="clang"
+
+# local xibuild profile
+# tune these preferences to suite local builds
 
 export JOBS=$(grep "processor" /proc/cpuinfo | wc -l)
 export MAKEFLAGS=-j$JOBS
 export SAMUFLAGS=-j$JOBS
 export CARGO_BUILD_JOBS=$JOBS
 
-export CFLAGS="-pipe -Os -fomit-frame-pointer"
+export CFLAGS="-pipe -O2 -march=native"
 export CXXFLAGS="$CFLAGS"
 export CPPFLAGS="$CFLAGS"
 export LDFLAGS="-Wl,--as-needed,-O1,--sort-common"
