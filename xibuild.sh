@@ -134,15 +134,26 @@ xibuild_build () {
     } 
 }
 
+# strip file from any symbols
+#  will also determine any dependencies 
+#
 xibuild_strip () {
-   for file in \
-       $(find $root/$export_dir/ -type f -name \*.so* ! -name \*dbg) \
-       $(find $root/$export_dir/ -type f -name \*.a) \
-       $(find $root/$export_dir/ -type f -executable ); do
-       strip --strip-unneeded $file 2>&1
-   done
+   
+    for pkgname in $(ls $root/$export_dir); do
+        echo > $out_dir/$pkgname.deps
+        for file in \
+            $(find $root/$export_dir/ -type f -name \*.so* ! -name \*dbg) \
+            $(find $root/$export_dir/ -type f -name \*.a) \
+            $(find $root/$export_dir/ -type f -executable ); do
 
-   find $root/$export_dir -name \*.la -delete 2>&1
+            strip --strip-unneeded $file 2>&1
+
+            ldd $file 2>/dev/null | grep "=>" | cut -d"=>" -f2 | awk '{ print $1 }' | xargs xi -r $root -q file >> $out_dir/$pkgname.deps 
+        done
+    done
+
+    # remove libtool archives
+    find $root/$export_dir -name \*.la -delete 2>&1
 }
 
 xibuild_package () {
@@ -160,10 +171,12 @@ xibuild_package () {
             tar -C $root/$export_dir/$pkg -cJf $out_dir/$pkg.xipkg ./
         }
     done
+
     for buildfile in $(find $src_dir -name "*.xibuild"); do
         cp $buildfile $out_dir/
     done
 }
+
 
 xibuild_describe () {
     for xipkg in $(ls $out_dir/*.xipkg); do 
@@ -177,6 +190,9 @@ xibuild_describe () {
         [ -z "$pkg_ver" ] && pkg_ver=$BRANCH
         [ -z "$pkg_ver" ] && pkg_ver="latest"
 
+        deps="$(echo ${DEPS} | tr ' ' '\n' | cat - $out_dir/$name.deps | sort | uniq -u | xargs printf "%s ")"
+        rm $out_dir/$name.deps
+
         {
             echo "# XiPKG info file version $XIPKG_INFO_VERSION"
             echo "# automatically generated from the built packages"
@@ -188,8 +204,8 @@ xibuild_describe () {
             echo "REVISION=$(cat ${buildfile%/*}/*.xibuild | sha512sum | cut -d' ' -f1)"
             echo "SOURCE=$SOURCE"
             echo "DATE=$(stat -t $xipkg | cut -d' ' -f13 | xargs date -d)"
-            echo "DEPS=${DEPS}"
-            echo "MAKE_DEPS=${MAKE_DEPS}"
+            echo "DEPS=${deps}"
+            echo "MAKE_DEPS=${MAKE_DEPS} ${DEPS}"
             echo "ORIGIN=$NAME"
         } > $info_file
     done
