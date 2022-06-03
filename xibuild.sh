@@ -190,7 +190,8 @@ xibuild_describe () {
         [ -z "$pkg_ver" ] && pkg_ver=$BRANCH
         [ -z "$pkg_ver" ] && pkg_ver="latest"
 
-        deps="$(echo ${DEPS} | tr ' ' '\n' | cat - $out_dir/$name.deps | sort | uniq -u | xargs printf "%s ")"
+        deps="$(echo ${DEPS} | tr ' ' '\n' | cat - $out_dir/$name.deps | sort | uniq | xargs printf "%s ")"
+        echo "${deps}"
         rm $out_dir/$name.deps
 
         {
