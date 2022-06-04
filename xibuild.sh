@@ -77,6 +77,7 @@ extract () {
         *"gzip"*) tar -zxf $f;;
         *"XZ"*) tar -Jxf $f;;
         *"bzip2"*) tar -jxf $f;;
+        *"lzip"*) tar --lzip -xf $f;;
         *"Zip"*) unzip -qq -o $f ;;
     esac
 }
