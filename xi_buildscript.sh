@@ -67,10 +67,11 @@ for xibuild in $PKG_NAME.xibuild $(ls *.xibuild | grep -v "^$PKG_NAME.xibuild$")
         fi
         
         for t in $stages; do
-            type $t >/dev/null && {
+            type $t >/dev/null 2>/dev/null && {
                 echo "==========================$t stage=========================="
                 $t || exit 1
             }
         done
-
 done
+
+exit 0

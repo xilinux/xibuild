@@ -149,7 +149,12 @@ xibuild_strip () {
 
             strip --strip-unneeded $file 2>&1
 
-            ldd $file 2>/dev/null | grep "=>" | cut -d"=>" -f2 | awk '{ print $1 }' | xargs xi -r $root -q file >> $out_dir/$pkgname.deps 
+            {
+                [ "$root" = "/" ] \
+                    && ldd $file \
+                    || xichroot "$root" ldd "${file#$root}"
+            } 2>>$logfile | grep "=>" | cut -d"=>" -f2 | awk '{ print $1 }' \
+              | xargs xi -r $root -q file 2>>$logfile >> $out_dir/$pkgname.deps 
         done
     done
 
@@ -204,7 +209,7 @@ xibuild_describe () {
             echo "VERSION=$pkg_ver"
             echo "REVISION=$(cat ${buildfile%/*}/*.xibuild | sha512sum | cut -d' ' -f1)"
             echo "SOURCE=$SOURCE"
-            echo "DATE=$(stat -t $xipkg | cut -d' ' -f13 | xargs date -d)"
+            echo "DATE=$(date -d @$(stat -t $xipkg | cut -d' ' -f13))"
             echo "DEPS=${deps}"
             echo "MAKE_DEPS=${MAKE_DEPS} ${DEPS}"
             echo "ORIGIN=$NAME"
