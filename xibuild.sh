@@ -153,8 +153,8 @@ xibuild_strip () {
                 [ "$root" = "/" ] \
                     && ldd $file \
                     || xichroot "$root" ldd "${file#$root}"
-            } 2>>$logfile | grep "=>" | cut -d"=>" -f2 | awk '{ print $1 }' \
-              | xargs xi -r $root -q file 2>>$logfile >> $out_dir/$pkgname.deps 
+            } 2>/dev/null | grep "=>" | cut -d"=>" -f2 | awk '{ print $1 }' \
+              | xargs xi -r $root -q file 2>>/dev/null >> $out_dir/$pkgname.deps 
         done
     done
 
