@@ -2,6 +2,8 @@
 
 XIPKG_INFO_VERSION='05'
 
+#include colors.sh
+#include glyphs.sh
 [ -f /usr/lib/colors.sh ] && . /usr/lib/colors.sh
 [ -f /usr/lib/glyphs.sh ] && . /usr/lib/glyphs.sh
 
@@ -92,16 +94,18 @@ xibuild_prepare () {
 #   fetch_source [source_url] (branch)
 #
 fetch_source () {
-    git ls-remote -q $@ >/dev/null 2>&1 && {
+    case "$1" in 
+        *".git")
         git clone $1 .
         git checkout $2 
-    } 2>&1 || {
+        ;;
+    *)
         local downloaded=$(basename $1)
 
         curl -SsL $1 > $downloaded
         extract $downloaded
-
-    }
+        ;;
+    esac
 }
 
 xibuild_fetch () {
@@ -193,8 +197,10 @@ xibuild_describe () {
         . $buildfile
 
         local pkg_ver=$PKG_VER
-        [ -z "$pkg_ver" ] && pkg_ver=$BRANCH
-        [ -z "$pkg_ver" ] && pkg_ver="latest"
+        [ -z "$pkg_ver" ] && 
+            pkg_ver=$BRANCH
+        [ -z "$pkg_ver" ] && 
+            pkg_ver="latest"
 
         deps="$(echo ${DEPS} | tr ' ' '\n' | cat - $out_dir/$name.deps | sort | uniq | xargs printf "%s ")"
         rm $out_dir/$name.deps
