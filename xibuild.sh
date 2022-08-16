@@ -19,6 +19,7 @@ doinstall=false
 dostrip=true
 doclean=false
 checkopt=""
+subpkg="all"
 
 root="/"
 
@@ -43,6 +44,8 @@ ${BLUE}Avaiable Options:
         ${LIGHT_CYAN}specify a non-default xi_profile script, to run inside the chroot ${LIGHT_WHITE}[default: /etc/xibuild_profile.conf]
     ${BLUE}-k ${LIGHT_BLUE}[file]
         ${LIGHT_CYAN}specify an openssl private key to sign packages with${LIGHT_WHITE}
+    ${BLUE}-u ${LIGHT_BLUE}[subpackage]
+        ${LIGHT_CYAN}specify which subpackage should be built ${LIGHT_WHITE }[default: all]
     
     ${BLUE}-v
         ${LIGHT_CYAN}verbose: print logs to stdout
@@ -133,9 +136,9 @@ xibuild_build () {
     mkdir -p $root/$export_dir
 
     [ "$root" = "/" ] && {
-        sh $build_dir/xi_buildscript.sh $NAME $build_dir $checkopt 2>&1 || return 1
+        sh $build_dir/xi_buildscript.sh $NAME $build_dir $subpkg $checkopt 2>&1 || return 1
     } || {
-        xichroot "$root" "$build_dir/xi_buildscript.sh $NAME $build_dir $checkopt" 2>&1 || return 1
+        xichroot "$root" "$build_dir/xi_buildscript.sh $NAME $build_dir $subpkg $checkopt" 2>&1 || return 1
     } 
 }
 
@@ -266,6 +269,8 @@ while getopts ":r:l:C:k:p:b:o:vcinsh" opt; do
             key_file=$(realpath ${OPTARG});;
         p)
             xibuild_profile=$(realpath ${OPTARG});;
+        u)
+            subpkg=${OPTARG};;
         v)
             textout=/dev/stdout;;
         i)

@@ -2,6 +2,7 @@
 
 PKG_NAME=$1
 cd $2
+SUBPKG=${3:-all}
 
 . ./xi_profile.sh
 
@@ -37,7 +38,14 @@ echo "Build file for $1, to build at root $2"
 
 builds="$(ls *.xibuild | grep -v "$PKG_NAME.xibuild")"
 
-for xibuild in $PKG_NAME.xibuild $(ls *.xibuild | grep -v "^$PKG_NAME.xibuild$"); do 
+
+[ "$SUBPKG" == "all" ] && {
+    pkgs=$($PKG_NAME.xibuild $(ls *.xibuild | grep -v "^$PKG_NAME.xibuild$"))
+} || {
+    pkgs="$SUBPKG"
+}
+
+for xibuild in $pkgs; do 
         cd $2
         SUBPKG_NAME=$(basename $xibuild .xibuild)
         mkdir -p ./xipkg/$SUBPKG_NAME
@@ -46,7 +54,7 @@ for xibuild in $PKG_NAME.xibuild $(ls *.xibuild | grep -v "^$PKG_NAME.xibuild$")
 
         echo "============$SUBPKG_NAME============="
 
-        #  read only the static variables fromt the primary
+        #  read only the static variables from the primary
         . ./$PKG_NAME.xibuild
         unset -f prepare
         unset -f build
