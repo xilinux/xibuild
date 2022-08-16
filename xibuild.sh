@@ -45,7 +45,7 @@ ${BLUE}Avaiable Options:
     ${BLUE}-k ${LIGHT_BLUE}[file]
         ${LIGHT_CYAN}specify an openssl private key to sign packages with${LIGHT_WHITE}
     ${BLUE}-u ${LIGHT_BLUE}[subpackage]
-        ${LIGHT_CYAN}specify which subpackage should be built ${LIGHT_WHITE }[default: all]
+        ${LIGHT_CYAN}specify which subpackage should be built ${LIGHT_WHITE}[default: all]
     
     ${BLUE}-v
         ${LIGHT_CYAN}verbose: print logs to stdout
@@ -98,7 +98,7 @@ xibuild_prepare () {
 #
 fetch_source () {
     case "$1" in 
-        *".git")
+        *".git"|"git://"*)
         git clone $1 .
         git checkout $2 
         ;;
@@ -253,7 +253,7 @@ xibuild_clean () {
     rm $out_dir/build.log
 }
 
-while getopts ":r:l:C:k:p:b:o:vcinsh" opt; do
+while getopts ":r:l:C:k:p:b:o:u:vcinsh" opt; do
     case "${opt}" in
         r)
             root=$(realpath ${OPTARG});;

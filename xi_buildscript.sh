@@ -39,10 +39,10 @@ echo "Build file for $1, to build at root $2"
 builds="$(ls *.xibuild | grep -v "$PKG_NAME.xibuild")"
 
 
-[ "$SUBPKG" == "all" ] && {
+[ "$SUBPKG" = "all" ] && {
     pkgs=$($PKG_NAME.xibuild $(ls *.xibuild | grep -v "^$PKG_NAME.xibuild$"))
 } || {
-    pkgs="$SUBPKG"
+    pkgs="$SUBPKG".xibuild
 }
 
 for xibuild in $pkgs; do 
