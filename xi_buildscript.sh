@@ -40,7 +40,8 @@ builds="$(ls *.xibuild | grep -v "$PKG_NAME.xibuild")"
 
 
 [ "$SUBPKG" = "all" ] && {
-    pkgs=$($PKG_NAME.xibuild $(ls *.xibuild | grep -v "^$PKG_NAME.xibuild$"))
+    pkgs="$PKG_NAME.xibuild $(ls *.xibuild | grep -v "^$PKG_NAME.xibuild$")"
+    true
 } || {
     pkgs="$SUBPKG".xibuild
 }
