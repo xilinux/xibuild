@@ -117,7 +117,7 @@ xibuild_fetch () {
 
     [ "$(ls -1 | wc -l)" = "2" ] &&
         for file in */* */.*; do 
-            echo $file | grep -q '\.$' || mv $file .
+            echo "$file" | grep -q '\.$' || mv "$file" .
         done;
         
     for url in $ADDITIONAL; do 
