@@ -78,12 +78,13 @@ EOF
 
 extract () {
     f=$1
-    case "$(file $f)" in 
+    case "$(file -b $f)" in 
+        *"XZ"*|*"xz"*) tar -Jxf $f;;
         *"gzip"*) tar -zxf $f;;
-        *"XZ"*) tar -Jxf $f;;
         *"bzip2"*) tar -jxf $f;;
         *"lzip"*) tar --lzip -xf $f;;
-        *"Zip"*) unzip -qq -o $f ;;
+        *"Zip"*|*"zip"*) unzip -qq -o $f ;;
+        *) echo "don't know how to extract file type: $(file $f)"
     esac
 }
 
@@ -126,7 +127,11 @@ xibuild_fetch () {
             *) fetch_source file://$src_dir/$url
         esac
     done
-    cp -r $src_dir/*.xibuild $root/$build_dir/
+    for xibuild in $src_dir/*.xibuild; do
+        echo "copying $xibuild to $root/$build_dir"
+        cp -r $xibuild $root/$build_dir/
+        file $root/$build_dir/$(basename $xibuild)
+    done
 }
 
 xibuild_build () {
